@@ -1004,6 +1004,7 @@ function validateRelease(release) {
   if (!/^0\.0\.\d+$/.test(release.version)) throw new Error("Release registry contains an unsupported Agora version.");
   if (!["x86_64", "aarch64"].includes(release.architecture)) throw new Error("Release registry contains an unsupported architecture.");
   if (!/^[0-9a-f]{40}$/.test(release.sourceCommit)) throw new Error("Release registry contains an invalid source commit.");
+  if (!release.flatpakFile.toLowerCase().endsWith(".flatpak")) throw new Error("Release registry contains an invalid Flatpak filename.");
   if (!/^[0-9a-f]{64}$/.test(release.flatpakSha256)) throw new Error("Release registry contains an invalid Flatpak checksum.");
   if (!/^[0-9a-f]{64}$/.test(release.browserWasmSha256)) throw new Error("Release registry contains an invalid capsule checksum.");
   if (release.executionMode !== "browser-wasm-capsule") throw new Error("Release registry contains an unsupported execution mode.");
@@ -1031,6 +1032,7 @@ async function verifyReleaseRegistry(document2, trustedKeys) {
   );
   if (!valid) throw new Error("Release registry signature verification failed.");
   if (!Array.isArray(document2.payload.releases)) throw new Error("Release registry has no release list.");
+  if (document2.payload.releases.length === 0) throw new Error("Release registry contains no approved releases.");
   document2.payload.releases.forEach(validateRelease);
   const unique = new Set(document2.payload.releases.map((release) => release.flatpakSha256));
   if (unique.size !== document2.payload.releases.length) throw new Error("Release registry contains duplicate Flatpak checksums.");
@@ -1429,6 +1431,7 @@ var FrameulatorElement = class extends HTMLElementBase {
     for (const type of ["frameulator-frame", "frameulator-state", "frameulator-result", "frameulator-error", "frameulator-application", "frameulator-flatpak-verified"]) {
       this.lab.addEventListener(type, ((event) => {
         if (type === "frameulator-application") this.setApplicationState(event.detail.state, event.detail.detail, event.detail.progress);
+        if (type === "frameulator-state") this.setState(event.detail.state ?? event.detail.sessionState ?? "UNKNOWN");
         this.dispatch(type, event.detail);
       }));
     }
@@ -1497,6 +1500,7 @@ var FrameulatorElement = class extends HTMLElementBase {
       progressElement.hidden = state !== "HASHING";
       progressElement.value = progress ?? 0;
     }
+    this.setDisabled("select", ["HASHING", "VERIFIED", "LOADING_CAPSULE"].includes(state));
     const ready = ["READY", "RUNNING", "STOPPED"].includes(state);
     this.setDisabled("run", !ready);
     this.setDisabled("loss", state !== "RUNNING");
