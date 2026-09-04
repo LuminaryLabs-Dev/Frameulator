@@ -1,4 +1,4 @@
-import { copyFile, mkdir } from "node:fs/promises";
+import { chmod, copyFile, mkdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
@@ -15,4 +15,4 @@ execFileSync("cargo", ["build", "--locked", "--release", "--target", "wasm32-unk
 
 await mkdir(outputDirectory, { recursive: true });
 await copyFile(source, destination);
-
+await chmod(destination, 0o644);

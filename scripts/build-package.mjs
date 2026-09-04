@@ -1,6 +1,6 @@
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -62,6 +62,7 @@ await build({
 });
 
 await copyFile(wasmPath, resolve(dist, "frameulator.wasm"));
+await chmod(resolve(dist, "frameulator.wasm"), 0o644);
 await copyFile(resolve(packageRoot, "src/styles.css"), resolve(dist, "frameulator.css"));
 
 const tsc = resolve(root, "node_modules/.bin/tsc");
