@@ -1,4 +1,5 @@
 import type { ControllerState, FrameulatorEvent, FrameulatorOptions, EvidenceComparison, NativeEvidence, Pose, Scenario, ScenarioReport } from "./types";
+import type { ApplicationState, FlatpakInput, FlatpakVerification } from "./types";
 export declare class Frameulator extends EventTarget {
     private readonly transport;
     private readonly store;
@@ -10,8 +11,14 @@ export declare class Frameulator extends EventTarget {
     private previousTime;
     private stepping;
     private importedEvidence?;
+    private readonly applicationGate;
+    private lastReport?;
     private constructor();
     static create(options?: FrameulatorOptions): Promise<Frameulator>;
+    get applicationState(): ApplicationState;
+    get flatpakVerification(): FlatpakVerification | undefined;
+    selectFlatpak(input: FlatpakInput): Promise<FlatpakVerification>;
+    removeApplication(): Promise<void>;
     setEyePreviews(left: HTMLCanvasElement, right: HTMLCanvasElement): void;
     start(): Promise<void>;
     stop(): Promise<void>;
@@ -31,4 +38,6 @@ export declare class Frameulator extends EventTarget {
     destroy(): Promise<void>;
     private tick;
     private emit;
+    private requireApplication;
+    private applicationEvidence;
 }

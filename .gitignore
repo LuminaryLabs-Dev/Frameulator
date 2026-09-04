@@ -6,3 +6,4 @@ packages/frameulator/rust/target/
 .DS_Store
 .validation/
 render-runtime/
+packages/frameulator/tests/fixtures/agora-test-capsule.wasm

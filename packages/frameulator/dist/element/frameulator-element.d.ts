@@ -9,6 +9,9 @@ export declare class FrameulatorElement extends HTMLElementBase {
     private bindControls;
     private renderServices;
     private setState;
+    private selectFlatpak;
+    private setApplicationState;
+    private setDisabled;
     private showReport;
     private showError;
     private downloadReport;

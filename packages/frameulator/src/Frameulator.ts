@@ -12,6 +12,10 @@ import type {
   ScenarioReport,
 } from "./types";
 import { WorkerClient } from "./WorkerClient";
+import { ApplicationGate } from "./application/ApplicationGate";
+import { BrowserCapsule, applyCapsuleEvent, runCapsuleScenario, type CapsuleSnapshot } from "./application/BrowserCapsule";
+import { loadReleaseRegistry } from "./application/ReleaseRegistry";
+import type { AgoraRelease, ApplicationEvidence, ApplicationState, FlatpakInput, FlatpakVerification, KernelScenarioReport } from "./types";
 
 interface Transport {
   request(method: string, parameters?: unknown): Promise<any>;
@@ -19,6 +23,7 @@ interface Transport {
 }
 
 class LocalTransport implements Transport {
+  private capsule?: BrowserCapsule;
   private constructor(private readonly kernel: FrameulatorKernel) {}
 
   static async create(options: FrameulatorOptions): Promise<LocalTransport> {
@@ -27,19 +32,29 @@ class LocalTransport implements Transport {
 
   async request(method: string, parameters?: unknown): Promise<any> {
     switch (method) {
-      case "start": return { state: this.kernel.start() };
-      case "stop": return { state: this.kernel.stop() };
-      case "step": this.kernel.step(Number(parameters)); return this.kernel.snapshot;
+      case "loadCapsule": this.capsule = await BrowserCapsule.create(parameters as Uint8Array); return this.capsule.snapshot;
+      case "unloadCapsule": this.capsule = undefined; return { unloaded: true };
+      case "start": this.capsule?.start(); return { state: this.kernel.start(), applicationFrame: this.capsule?.snapshot };
+      case "stop": this.capsule?.stop(); return { state: this.kernel.stop(), applicationFrame: this.capsule?.snapshot };
+      case "step": this.kernel.step(Number(parameters)); this.capsule?.step(Number(parameters)); return { ...this.kernel.snapshot, applicationFrame: this.capsule?.snapshot };
       case "setHeadPose": this.kernel.setHeadPose(parameters as Pose); return this.kernel.snapshot;
       case "setControllerState": {
         const { hand, state } = parameters as { hand: "left" | "right"; state: ControllerState };
         this.kernel.setControllerState(hand, state);
         return this.kernel.snapshot;
       }
-      case "injectEvent": return { state: this.kernel.injectEvent(parameters as FrameulatorEvent) };
-      case "runScenario": return this.kernel.runScenario(parameters as Scenario | string);
+      case "injectEvent": {
+        const event = parameters as FrameulatorEvent;
+        if (this.capsule) applyCapsuleEvent(this.capsule, event);
+        this.kernel.injectEvent(event);
+        return { ...this.kernel.snapshot, state: this.kernel.sessionState, applicationFrame: this.capsule?.snapshot };
+      }
+      case "runScenario": return {
+        report: await this.kernel.runScenario(parameters as Scenario | string),
+        applicationFrame: this.capsule ? runCapsuleScenario(this.capsule, parameters as Scenario | string) : undefined,
+      };
       case "exportReport": return this.kernel.exportReport();
-      case "snapshot": return this.kernel.snapshot;
+      case "snapshot": return { ...this.kernel.snapshot, applicationFrame: this.capsule?.snapshot };
       default: return this.kernel.call(method);
     }
   }
@@ -56,17 +71,33 @@ export class Frameulator extends EventTarget {
   private previousTime = 0;
   private stepping = false;
   private importedEvidence?: NativeEvidence;
+  private readonly applicationGate: ApplicationGate;
+  private lastReport?: ScenarioReport;
 
   private constructor(
     private readonly transport: Transport,
     private readonly store: ReportStore,
+    releases: AgoraRelease[],
+    registryBaseUrl: URL | undefined,
+    maximumFlatpakBytes: number,
   ) {
     super();
+    this.applicationGate = new ApplicationGate({
+      releases,
+      registryBaseUrl,
+      maximumBytes: maximumFlatpakBytes,
+      onState: (state, detail, progress) => this.emit("frameulator-application", { state, detail, progress }),
+    });
   }
 
   static async create(options: FrameulatorOptions = {}): Promise<Frameulator> {
     if (options.network && options.network !== "disabled") {
       throw new Error("Frameulator 0.1.0 only supports network: disabled.");
+    }
+    const registry = await loadReleaseRegistry(options.releaseRegistry, options.trustedReleaseKeys ?? []);
+    const maximumFlatpakBytes = options.maximumFlatpakBytes ?? 200 * 1024 * 1024;
+    if (!Number.isSafeInteger(maximumFlatpakBytes) || maximumFlatpakBytes <= 0) {
+      throw new Error("maximumFlatpakBytes must be a positive integer.");
     }
     const useWorker = options.worker !== false && typeof Worker !== "undefined";
     const transport = useWorker ? await WorkerClient.create(options) : await LocalTransport.create(options);
@@ -78,12 +109,43 @@ export class Frameulator extends EventTarget {
         store = new MemoryReportStore();
       }
     }
-    const frameulator = new Frameulator(transport, store);
+    const frameulator = new Frameulator(transport, store, registry.releases, registry.baseUrl, maximumFlatpakBytes);
     if (options.container && options.renderer !== "none") {
       frameulator.renderer = new FrameulatorRenderer(options.container);
     }
-    frameulator.emit("frameulator-ready", { version: frameulator.version, simulated: true });
+    frameulator.emit("frameulator-ready", { version: frameulator.version, simulated: true, applicationState: "EMPTY" });
     return frameulator;
+  }
+
+  get applicationState(): ApplicationState {
+    return this.applicationGate.state;
+  }
+
+  get flatpakVerification(): FlatpakVerification | undefined {
+    return this.applicationGate.verification;
+  }
+
+  async selectFlatpak(input: FlatpakInput): Promise<FlatpakVerification> {
+    try {
+      const result = await this.applicationGate.verify(input);
+      const snapshot = await this.transport.request("loadCapsule", result.capsuleBytes) as CapsuleSnapshot;
+      if (!snapshot.stereoContractValid) throw new Error("Agora capsule did not validate its stereo scene contract.");
+      this.emit("frameulator-flatpak-verified", result.verification);
+      return result.verification;
+    } catch (error) {
+      if (this.applicationGate.state !== "REJECTED") {
+        this.applicationGate.markFailed(error instanceof Error ? error.message : String(error));
+      }
+      throw error;
+    }
+  }
+
+  async removeApplication(): Promise<void> {
+    if (this.running) await this.stop();
+    await this.transport.request("unloadCapsule");
+    this.lastReport = undefined;
+    this.renderer?.clearApplicationFrame();
+    this.applicationGate.reset();
   }
 
   setEyePreviews(left: HTMLCanvasElement, right: HTMLCanvasElement): void {
@@ -91,7 +153,9 @@ export class Frameulator extends EventTarget {
   }
 
   async start(): Promise<void> {
+    this.requireApplication();
     const result = await this.transport.request("start");
+    this.applicationGate.markRunning();
     this.running = true;
     this.previousTime = performance.now();
     this.frameRequest = requestAnimationFrame(this.tick);
@@ -102,6 +166,7 @@ export class Frameulator extends EventTarget {
     this.running = false;
     if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(this.frameRequest);
     const result = await this.transport.request("stop");
+    if (this.applicationGate.verification?.accepted) this.applicationGate.markStopped();
     this.emit("frameulator-state", result);
   }
 
@@ -117,6 +182,7 @@ export class Frameulator extends EventTarget {
 
   async injectEvent(event: FrameulatorEvent): Promise<void> {
     const result = await this.transport.request("injectEvent", event);
+    this.renderer?.update(result);
     this.emit("frameulator-state", result);
   }
 
@@ -129,7 +195,18 @@ export class Frameulator extends EventTarget {
   }
 
   async runScenario(input: Scenario | string): Promise<ScenarioReport> {
-    const report = await this.transport.request("runScenario", input) as ScenarioReport;
+    this.requireApplication();
+    const output = await this.transport.request("runScenario", input) as {
+      report: KernelScenarioReport;
+      applicationFrame?: CapsuleSnapshot;
+    };
+    const report: ScenarioReport = {
+      ...output.report,
+      application: this.applicationEvidence(output.applicationFrame),
+    };
+    this.lastReport = structuredClone(report);
+    if (["STOPPING", "IDLE"].includes(report.sessionState)) this.applicationGate.markStopped();
+    else this.applicationGate.markRunning();
     await this.store.save(report);
     const snapshot = await this.transport.request("snapshot");
     this.renderer?.update(snapshot);
@@ -139,7 +216,8 @@ export class Frameulator extends EventTarget {
   }
 
   async exportReport(): Promise<ScenarioReport> {
-    return this.transport.request("exportReport");
+    if (!this.lastReport) throw new Error("Run a verified Agora scenario before exporting a report.");
+    return structuredClone(this.lastReport);
   }
 
   async latestReport(): Promise<ScenarioReport | undefined> {
@@ -185,6 +263,7 @@ export class Frameulator extends EventTarget {
     this.transport.destroy();
     this.store.close();
     this.importedEvidence = undefined;
+    this.lastReport = undefined;
   }
 
   private tick = async (time: number): Promise<void> => {
@@ -210,5 +289,31 @@ export class Frameulator extends EventTarget {
 
   private emit(type: string, detail: unknown): void {
     this.dispatchEvent(new CustomEvent(type, { detail }));
+  }
+
+  private requireApplication(): void {
+    if (!this.applicationGate.verification?.accepted || !["READY", "STOPPED", "RUNNING"].includes(this.applicationGate.state)) {
+      throw new Error("FLATPAK_REQUIRED: select an approved Agora Flatpak before starting a session.");
+    }
+  }
+
+  private applicationEvidence(snapshot?: CapsuleSnapshot): ApplicationEvidence {
+    const release = this.applicationGate.verification?.release;
+    if (!release) throw new Error("The verified Agora release is unavailable.");
+    return {
+      flatpakUploaded: true,
+      flatpakHashVerified: true,
+      matchingAgoraCodeExecuted: Boolean(snapshot?.stereoContractValid && snapshot.frameCount > 0),
+      executionMode: "browser-wasm-capsule",
+      nativeFlatpakInstalled: false,
+      nativeFlatpakExecuted: false,
+      hardwareSimulated: true,
+      appId: release.appId,
+      version: release.version,
+      architecture: release.architecture,
+      sourceCommit: release.sourceCommit,
+      flatpakSha256: release.flatpakSha256,
+      browserWasmSha256: release.browserWasmSha256,
+    };
   }
 }

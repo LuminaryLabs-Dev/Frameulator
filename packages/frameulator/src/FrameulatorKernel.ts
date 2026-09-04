@@ -9,7 +9,7 @@ import type {
   Pose,
   Scenario,
   ScenarioAssertion,
-  ScenarioReport,
+  KernelScenarioReport,
   SessionState,
 } from "./types";
 import { instantiateKernel, type KernelExports } from "./wasm";
@@ -36,7 +36,7 @@ export class FrameulatorKernel {
   readonly profile: FrameulatorProfile;
   private readonly wasm: KernelExports;
   private world: SimulationWorld;
-  private lastReport?: ScenarioReport;
+  private lastReport?: KernelScenarioReport;
 
   private constructor(profile: FrameulatorProfile, wasm: KernelExports) {
     this.profile = profile;
@@ -123,7 +123,7 @@ export class FrameulatorKernel {
     return queryService(method, this.profile, this.world);
   }
 
-  async runScenario(input: Scenario | string): Promise<ScenarioReport> {
+  async runScenario(input: Scenario | string): Promise<KernelScenarioReport> {
     const scenario = resolveScenario(input);
     const assertions: ScenarioAssertion[] = [];
     this.reset();
@@ -168,9 +168,8 @@ export class FrameulatorKernel {
     return structuredClone(this.lastReport);
   }
 
-  exportReport(): ScenarioReport {
+  exportReport(): KernelScenarioReport {
     if (!this.lastReport) throw new Error("Run a scenario before exporting a report.");
     return structuredClone(this.lastReport);
   }
 }
-

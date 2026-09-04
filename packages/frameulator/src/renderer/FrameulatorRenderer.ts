@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import type { ControllerState, Pose } from "../types";
+import type { CapsuleSnapshot } from "../application/BrowserCapsule";
 
 export interface RenderSnapshot {
   headPose: Pose;
   controllers: Record<"left" | "right", ControllerState>;
   sessionState: string;
+  applicationFrame?: CapsuleSnapshot;
 }
 
 export class FrameulatorRenderer {
@@ -17,6 +19,14 @@ export class FrameulatorRenderer {
     right: new THREE.Group(),
   };
   private readonly observer = new ResizeObserver(() => this.resize());
+  private readonly applicationCube: THREE.Mesh;
+  private readonly applicationHalo: THREE.Mesh;
+  private readonly eyeCamera = new THREE.PerspectiveCamera(72, 180 / 132, 0.01, 30);
+  private readonly eyeTargets = [
+    new THREE.WebGLRenderTarget(180, 132, { depthBuffer: true }),
+    new THREE.WebGLRenderTarget(180, 132, { depthBuffer: true }),
+  ] as const;
+  private readonly eyePixels = [new Uint8Array(180 * 132 * 4), new Uint8Array(180 * 132 * 4)] as const;
   private previews?: [HTMLCanvasElement, HTMLCanvasElement];
   private animationFrame = 0;
   private destroyed = false;
@@ -60,6 +70,20 @@ export class FrameulatorRenderer {
     portal.position.set(0, 1.45, -1.4);
     this.scene.add(portal);
 
+    this.applicationCube = new THREE.Mesh(
+      new THREE.BoxGeometry(0.48, 0.48, 0.48),
+      new THREE.MeshStandardMaterial({ color: 0x69e2d0, emissive: 0x0d6e68, emissiveIntensity: 0.55, roughness: 0.24, metalness: 0.36 }),
+    );
+    this.applicationCube.position.set(0, 1.45, -1.48);
+    this.applicationCube.visible = false;
+    this.applicationHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.47, 0.012, 8, 64),
+      new THREE.MeshBasicMaterial({ color: 0xff7548, transparent: true, opacity: 0.72 }),
+    );
+    this.applicationHalo.position.copy(this.applicationCube.position);
+    this.applicationHalo.visible = false;
+    this.scene.add(this.applicationCube, this.applicationHalo);
+
     this.observer.observe(container);
     this.resize();
     this.animate();
@@ -73,6 +97,19 @@ export class FrameulatorRenderer {
     this.applyPose(this.head, snapshot.headPose);
     this.applyController(this.controllers.left, snapshot.controllers.left);
     this.applyController(this.controllers.right, snapshot.controllers.right);
+    if (snapshot.applicationFrame) {
+      this.applicationCube.visible = true;
+      this.applicationHalo.visible = true;
+      const phase = snapshot.applicationFrame.scenePhaseRadians;
+      this.applicationCube.rotation.set(phase * 0.62, phase, phase * 0.28);
+      this.applicationHalo.rotation.y = -phase * 0.45;
+    }
+  }
+
+  clearApplicationFrame(): void {
+    this.applicationCube.visible = false;
+    this.applicationHalo.visible = false;
+    for (const canvas of this.previews ?? []) canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   destroy(): void {
@@ -87,6 +124,7 @@ export class FrameulatorRenderer {
       else material?.dispose();
     });
     this.renderer.dispose();
+    this.eyeTargets.forEach((target) => target.dispose());
     this.renderer.domElement.remove();
   }
 
@@ -150,12 +188,20 @@ export class FrameulatorRenderer {
     for (const [index, canvas] of this.previews.entries()) {
       const context = canvas.getContext("2d");
       if (!context) continue;
-      const source = this.renderer.domElement;
       const width = canvas.width;
       const height = canvas.height;
-      const cropWidth = source.width * 0.72;
-      const offset = index === 0 ? 0 : source.width - cropWidth;
-      context.drawImage(source, offset, 0, cropWidth, source.height, 0, 0, width, height);
+      this.eyeCamera.position.set(index === 0 ? -0.032 : 0.032, 1.65, 0.05);
+      this.eyeCamera.lookAt(0, 1.45, -1.5);
+      this.renderer.setRenderTarget(this.eyeTargets[index]);
+      this.renderer.render(this.scene, this.eyeCamera);
+      this.renderer.readRenderTargetPixels(this.eyeTargets[index], 0, 0, width, height, this.eyePixels[index]);
+      this.renderer.setRenderTarget(null);
+      const image = context.createImageData(width, height);
+      for (let row = 0; row < height; row += 1) {
+        const sourceStart = (height - row - 1) * width * 4;
+        image.data.set(this.eyePixels[index].subarray(sourceStart, sourceStart + width * 4), row * width * 4);
+      }
+      context.putImageData(image, 0, 0);
       context.fillStyle = "rgba(6, 10, 11, 0.72)";
       context.fillRect(8, 8, 42, 18);
       context.fillStyle = "#bff9ee";
@@ -164,4 +210,3 @@ export class FrameulatorRenderer {
     }
   }
 }
-

@@ -1,7 +1,7 @@
 {
   "name": "@luminarylabs/frameulator",
   "version": "0.1.0",
-  "description": "Deterministic browser simulation of Steam Frame-facing platform contracts.",
+  "description": "Local Agora Flatpak verification and lightweight OpenXR contract simulation for static sites.",
   "type": "module",
   "sideEffects": false,
   "files": [
@@ -57,4 +57,3 @@
     "node": ">=22.0.0"
   }
 }
-

@@ -1,7 +1,9 @@
 import { FrameulatorKernel } from "../FrameulatorKernel";
 import type { RpcRequest, RpcResponse } from "../types";
+import { BrowserCapsule, applyCapsuleEvent, runCapsuleScenario } from "../application/BrowserCapsule";
 
 let kernel: FrameulatorKernel | undefined;
+let capsule: BrowserCapsule | undefined;
 
 async function dispatch(request: RpcRequest): Promise<unknown> {
   if (request.method === "initialize") {
@@ -11,13 +13,22 @@ async function dispatch(request: RpcRequest): Promise<unknown> {
   if (!kernel) throw new Error("Frameulator Worker is not initialized.");
 
   switch (request.method) {
+    case "loadCapsule":
+      capsule = await BrowserCapsule.create(request.parameters as Uint8Array);
+      return capsule.snapshot;
+    case "unloadCapsule":
+      capsule = undefined;
+      return { unloaded: true };
     case "start":
-      return { state: kernel.start() };
+      capsule?.start();
+      return { state: kernel.start(), applicationFrame: capsule?.snapshot };
     case "stop":
-      return { state: kernel.stop() };
+      capsule?.stop();
+      return { state: kernel.stop(), applicationFrame: capsule?.snapshot };
     case "step":
       kernel.step(Number(request.parameters));
-      return kernel.snapshot;
+      capsule?.step(Number(request.parameters));
+      return { ...kernel.snapshot, applicationFrame: capsule?.snapshot };
     case "setHeadPose":
       kernel.setHeadPose(request.parameters as never);
       return kernel.snapshot;
@@ -27,13 +38,18 @@ async function dispatch(request: RpcRequest): Promise<unknown> {
       return kernel.snapshot;
     }
     case "injectEvent":
-      return { state: kernel.injectEvent(request.parameters as never) };
+      if (capsule) applyCapsuleEvent(capsule, request.parameters as never);
+      kernel.injectEvent(request.parameters as never);
+      return { ...kernel.snapshot, state: kernel.sessionState, applicationFrame: capsule?.snapshot };
     case "runScenario":
-      return kernel.runScenario(request.parameters as never);
+      return {
+        report: await kernel.runScenario(request.parameters as never),
+        applicationFrame: capsule ? runCapsuleScenario(capsule, request.parameters as never) : undefined,
+      };
     case "exportReport":
       return kernel.exportReport();
     case "snapshot":
-      return kernel.snapshot;
+      return { ...kernel.snapshot, applicationFrame: capsule?.snapshot };
     default:
       return kernel.call(request.method);
   }
@@ -54,4 +70,3 @@ self.addEventListener("message", async (event: MessageEvent<RpcRequest>) => {
   }
   self.postMessage(response);
 });
-

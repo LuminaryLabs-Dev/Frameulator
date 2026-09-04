@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050708" />
-    <meta name="description" content="Frameulator is a deterministic Rust/WASM browser laboratory for Steam Frame-facing contracts." />
-    <title>Frameulator · Steam Frame contract laboratory</title>
+    <meta name="description" content="Frameulator verifies an approved Agora Flatpak locally, then runs its matching browser capsule against simulated Steam Frame contracts." />
+    <title>Frameulator · Agora Flatpak contract laboratory</title>
   </head>
   <body>
     <header class="site-header">
@@ -15,37 +15,37 @@
         <a href="#contracts">Contracts</a>
         <a href="https://github.com/LuminaryLabs-Dev/Frameulator">Source</a>
       </nav>
-      <span class="build">v0.1.0 · F1</span>
+      <span class="build">v0.1.0 · F1/F2</span>
     </header>
 
     <main id="top">
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Browser-native platform simulation</p>
-          <h1>Test the contract<br /><em>before the device.</em></h1>
-          <p class="lede">A deterministic Rust/WASM lab for rehearsing OpenXR session flow, controller input, tracking faults, framebuffer submission, and host-service boundaries on any static website.</p>
+          <p class="eyebrow">Verified Flatpak rehearsal</p>
+          <h1>Bring the build.<br /><em>Test its contract.</em></h1>
+          <p class="lede">Select an approved Agora Flatpak. Frameulator verifies it locally, loads the cryptographically matched Agora browser capsule, and rehearses OpenXR state, input, and stereo presentation.</p>
           <div class="hero-actions">
             <a class="primary" href="#laboratory">Open laboratory</a>
             <button class="copy" type="button" data-copy>Copy CDN import</button>
           </div>
-          <p class="truth">Simulation evidence, clearly labeled. No SteamVR, Vulkan driver, firmware, or hardware is executed in this page.</p>
+          <p class="truth">Your Flatpak stays on this device. The matching browser capsule runs—not the native Flatpak, Linux, SteamVR, Vulkan driver, firmware, or physical hardware.</p>
         </div>
         <div class="orbit" aria-hidden="true">
-          <div class="orbit-ring ring-a"></div><div class="orbit-ring ring-b"></div><div class="orbit-core">F1</div>
-          <span class="orbit-label label-a">OPENXR</span><span class="orbit-label label-b">WASM</span><span class="orbit-label label-c">THREE.JS</span>
+          <div class="orbit-ring ring-a"></div><div class="orbit-ring ring-b"></div><div class="orbit-core">&lt;200</div>
+          <span class="orbit-label label-a">FLATPAK HASH</span><span class="orbit-label label-b">AGORA WASM</span><span class="orbit-label label-c">THREE.JS</span>
         </div>
       </section>
 
       <section class="laboratory" id="laboratory">
         <div class="section-heading">
-          <div><p class="eyebrow">Interactive proof surface</p><h2>Frame contract laboratory</h2></div>
-          <p id="page-status" role="status">Kernel waiting</p>
+          <div><p class="eyebrow">Interactive proof surface</p><h2>Agora application laboratory</h2></div>
+          <p id="page-status" role="status">Flatpak required</p>
         </div>
         <frameulator-lab profile="steam-frame" scenario="normal-session"></frameulator-lab>
       </section>
 
       <section class="contracts" id="contracts">
-        <div class="section-heading"><div><p class="eyebrow">Nine observable boundaries</p><h2>What the browser can rehearse</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">Nine observable boundaries</p><h2>What the approved capsule can rehearse</h2></div></div>
         <div class="contract-grid">
           <article><span>01</span><h3>ARM64 hardware</h3><p>ABI, memory pressure and timing contracts—not CPU instruction emulation.</p></article>
           <article><span>02</span><h3>Adreno GPU</h3><p>Limits, budgets and failures—not proprietary driver execution.</p></article>
@@ -64,4 +64,3 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-

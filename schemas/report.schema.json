@@ -3,7 +3,7 @@
   "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/report.schema.json",
   "title": "Frameulator browser simulation report",
   "type": "object",
-  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "services", "generatedAt"],
+  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "frameCount", "elapsedMilliseconds", "assertions", "services", "generatedAt", "application"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "frameulatorVersion": { "const": "0.1.0" },
@@ -17,8 +17,27 @@
     "elapsedMilliseconds": { "type": "number", "minimum": 0 },
     "assertions": { "type": "array" },
     "services": { "type": "object", "minProperties": 9 },
-    "generatedAt": { "type": "string", "format": "date-time" }
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "application": {
+      "type": "object",
+      "required": ["flatpakUploaded", "flatpakHashVerified", "matchingAgoraCodeExecuted", "executionMode", "nativeFlatpakInstalled", "nativeFlatpakExecuted", "hardwareSimulated", "appId", "version", "architecture", "sourceCommit", "flatpakSha256", "browserWasmSha256"],
+      "properties": {
+        "flatpakUploaded": { "const": true },
+        "flatpakHashVerified": { "const": true },
+        "matchingAgoraCodeExecuted": { "type": "boolean" },
+        "executionMode": { "const": "browser-wasm-capsule" },
+        "nativeFlatpakInstalled": { "const": false },
+        "nativeFlatpakExecuted": { "const": false },
+        "hardwareSimulated": { "const": true },
+        "appId": { "const": "dev.luminarylabs.Agora" },
+        "version": { "pattern": "^0\\.0\\.[0-9]+$" },
+        "architecture": { "enum": ["x86_64", "aarch64"] },
+        "sourceCommit": { "pattern": "^[0-9a-f]{40}$" },
+        "flatpakSha256": { "pattern": "^[0-9a-f]{64}$" },
+        "browserWasmSha256": { "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }
-

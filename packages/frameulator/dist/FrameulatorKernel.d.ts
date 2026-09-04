@@ -1,4 +1,4 @@
-import type { ControllerState, FrameulatorEvent, FrameulatorProfile, KernelCreateOptions, Pose, Scenario, ScenarioReport, SessionState } from "./types";
+import type { ControllerState, FrameulatorEvent, FrameulatorProfile, KernelCreateOptions, Pose, Scenario, KernelScenarioReport, SessionState } from "./types";
 export declare class FrameulatorKernel {
     readonly profile: FrameulatorProfile;
     private readonly wasm;
@@ -25,6 +25,6 @@ export declare class FrameulatorKernel {
     setControllerState(hand: "left" | "right", state: ControllerState): void;
     injectEvent(event: FrameulatorEvent): SessionState;
     call(method: string): unknown;
-    runScenario(input: Scenario | string): Promise<ScenarioReport>;
-    exportReport(): ScenarioReport;
+    runScenario(input: Scenario | string): Promise<KernelScenarioReport>;
+    exportReport(): KernelScenarioReport;
 }

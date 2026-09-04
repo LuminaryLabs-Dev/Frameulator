@@ -54,8 +54,27 @@ test("custom scenarios validate their identifier and assertions", async () => {
 });
 
 test("native evidence remains separate from browser simulation", async () => {
+  const kernel = await FrameulatorKernel.create({ wasmBytes });
   const lab = await Frameulator.create({ wasmBytes, worker: false, renderer: "none", storage: "memory" });
-  const simulation = await lab.runScenario("normal-session");
+  const base = await kernel.runScenario("normal-session");
+  const simulation = {
+    ...base,
+    application: {
+      flatpakUploaded: true,
+      flatpakHashVerified: true,
+      matchingAgoraCodeExecuted: true,
+      executionMode: "browser-wasm-capsule",
+      nativeFlatpakInstalled: false,
+      nativeFlatpakExecuted: false,
+      hardwareSimulated: true,
+      appId: "dev.luminarylabs.Agora",
+      version: "0.0.1",
+      architecture: "x86_64",
+      sourceCommit: "1".repeat(40),
+      flatpakSha256: "2".repeat(64),
+      browserWasmSha256: "3".repeat(64),
+    },
+  };
   const native = await lab.importEvidence({
     schemaVersion: 1,
     simulated: false,

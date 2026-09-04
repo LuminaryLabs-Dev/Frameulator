@@ -1,10 +1,20 @@
 import assert from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
 const packageRoot = resolve(root, "packages/frameulator");
+const maximumPublishedBytes = 200 * 1024 * 1024;
+
+async function directorySize(path) {
+  let total = 0;
+  for (const entry of await readdir(path, { withFileTypes: true })) {
+    const entryPath = resolve(path, entry.name);
+    total += entry.isDirectory() ? await directorySize(entryPath) : (await stat(entryPath)).size;
+  }
+  return total;
+}
 
 const required = [
   "dist/frameulator.js",
@@ -44,6 +54,23 @@ assert.ok(pack.files.every((file) => !/\.(?:pem|key|env)$/.test(file.path)));
 
 const site = await readFile(resolve(root, "docs/index.html"), "utf8");
 assert.match(site, /Frameulator/);
+assert.match(site, /Flatpak required/i);
 assert.doesNotMatch(site, /localhost/);
+assert.doesNotMatch(site, /qemu|alpine-frameulator|SharedArrayBuffer/i);
+const siteReleaseConfig = JSON.parse(await readFile(resolve(root, "docs/releases/config.json"), "utf8"));
+assert.deepEqual(siteReleaseConfig, {
+  schemaVersion: 1,
+  enabled: false,
+  releaseRegistry: null,
+  trustedReleaseKey: null,
+});
 
-console.log(`release verification passed (${pack.files.length} packed files)`);
+const publishedBytes = await directorySize(resolve(root, "docs"));
+assert.ok(
+  publishedBytes < maximumPublishedBytes,
+  `static site is ${(publishedBytes / 1048576).toFixed(2)} MB; it must remain below 200 MB`,
+);
+
+console.log(
+  `release verification passed (${pack.files.length} packed files, ${(publishedBytes / 1048576).toFixed(2)} MB site)`,
+);
