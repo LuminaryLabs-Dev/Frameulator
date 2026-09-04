@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuminaryLabs-Dev/Frameulator/v0.1.0/schemas/profile.schema.json",
+  "id": "steam-frame",
+  "label": "Steam Frame browser contract",
+  "version": "0.1.0",
+  "simulated": true,
+  "evidenceLevel": "F1-browser-wasm",
+  "display": {
+    "eyeWidth": 1440,
+    "eyeHeight": 1440,
+    "refreshRatesHz": [72, 90, 120],
+    "defaultRefreshRateHz": 72
+  },
+  "hardware": {
+    "architecture": "aarch64",
+    "memoryMiB": 16384
+  },
+  "gpu": {
+    "vendor": "Qualcomm",
+    "family": "Adreno",
+    "driver": "simulated-contract",
+    "api": "Vulkan 1.3 contract"
+  },
+  "openxr": {
+    "apiVersion": "1.1",
+    "runtime": "SteamVR contract model",
+    "viewConfiguration": "PRIMARY_STEREO"
+  }
+}
+

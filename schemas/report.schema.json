@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/report.schema.json",
+  "title": "Frameulator browser simulation report",
+  "type": "object",
+  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "services", "generatedAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "frameulatorVersion": { "const": "0.1.0" },
+    "scenario": { "type": "string" },
+    "profile": { "type": "string" },
+    "simulated": { "const": true },
+    "evidenceLevel": { "const": "F1-browser-wasm" },
+    "passed": { "type": "boolean" },
+    "sessionState": { "enum": ["IDLE", "READY", "SYNCHRONIZED", "VISIBLE", "FOCUSED", "STOPPING", "LOSS_PENDING", "EXITING"] },
+    "frameCount": { "type": "integer", "minimum": 0 },
+    "elapsedMilliseconds": { "type": "number", "minimum": 0 },
+    "assertions": { "type": "array" },
+    "services": { "type": "object", "minProperties": 9 },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
+

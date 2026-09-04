@@ -1,0 +1,60 @@
+{
+  "name": "@luminarylabs/frameulator",
+  "version": "0.1.0",
+  "description": "Deterministic browser simulation of Steam Frame-facing platform contracts.",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "profiles",
+    "scenarios",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/frameulator.js",
+  "module": "./dist/frameulator.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/frameulator.js"
+    },
+    "./standalone": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/frameulator.standalone.js"
+    },
+    "./styles": "./dist/frameulator.css",
+    "./worker": "./dist/frameulator.worker.js",
+    "./wasm": "./dist/frameulator.wasm",
+    "./profiles/*": "./profiles/*",
+    "./scenarios/*": "./scenarios/*"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "keywords": [
+    "openxr",
+    "steam-frame",
+    "simulation",
+    "webassembly",
+    "threejs"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuminaryLabs-Dev/Frameulator.git",
+    "directory": "packages/frameulator"
+  },
+  "homepage": "https://luminarylabs-dev.github.io/Frameulator/",
+  "bugs": "https://github.com/LuminaryLabs-Dev/Frameulator/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "three": "0.179.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
+

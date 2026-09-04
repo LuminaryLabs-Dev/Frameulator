@@ -1,0 +1,91 @@
+:host {
+  --frame-bg: #050708;
+  --frame-panel: #0b1113;
+  --frame-line: rgba(172, 242, 231, 0.16);
+  --frame-mint: #69e2d0;
+  --frame-orange: #ff7548;
+  --frame-text: #eef8f5;
+  --frame-muted: #8fa6a3;
+  display: block;
+  color: var(--frame-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+button, select { font: inherit; }
+
+.frameulator-shell {
+  min-height: 680px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--frame-line);
+  border-radius: 24px;
+  background: var(--frame-bg);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.44);
+}
+
+.frameulator-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--frame-line);
+  background: rgba(10, 15, 17, 0.96);
+}
+
+.frameulator-mark {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(105, 226, 208, 0.55);
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #c6fff7 0 5%, #4ecfbe 6% 18%, #0b2828 19% 56%, #ff7548 57% 63%, transparent 64%);
+  box-shadow: 0 0 24px rgba(73, 215, 198, 0.28);
+}
+
+.frameulator-title { display: grid; gap: 2px; }
+.frameulator-title strong { font-size: 14px; letter-spacing: 0.04em; }
+.frameulator-title span { color: var(--frame-muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+.frameulator-evidence { margin-left: auto; padding: 7px 10px; border: 1px solid rgba(255, 117, 72, 0.28); border-radius: 999px; color: #ffb198; background: rgba(255, 117, 72, 0.07); font: 600 10px ui-monospace, monospace; letter-spacing: 0.08em; }
+
+.frameulator-stage { position: relative; min-width: 0; min-height: 520px; overflow: hidden; }
+.frameulator-stage > canvas { display: block; width: 100%; height: 100%; }
+.frameulator-reticle { pointer-events: none; position: absolute; inset: 50% auto auto 50%; width: 34px; height: 34px; border: 1px solid rgba(105, 226, 208, 0.28); border-radius: 50%; transform: translate(-50%, -50%); }
+.frameulator-reticle::before, .frameulator-reticle::after { content: ""; position: absolute; background: rgba(105, 226, 208, 0.35); }
+.frameulator-reticle::before { width: 48px; height: 1px; left: -8px; top: 16px; }
+.frameulator-reticle::after { width: 1px; height: 48px; left: 16px; top: -8px; }
+
+.frameulator-panel { padding: 18px; border-left: 1px solid var(--frame-line); background: linear-gradient(180deg, rgba(14, 22, 24, 0.98), rgba(7, 10, 11, 0.98)); overflow: auto; }
+.frameulator-label { margin: 0 0 9px; color: var(--frame-muted); font: 600 10px ui-monospace, monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+.frameulator-state { display: flex; align-items: center; gap: 9px; margin-bottom: 20px; font: 700 21px ui-monospace, monospace; }
+.frameulator-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--frame-mint); box-shadow: 0 0 12px var(--frame-mint); }
+
+.frameulator-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.frameulator-actions button { min-height: 40px; padding: 0 12px; border: 1px solid var(--frame-line); border-radius: 9px; color: var(--frame-text); background: rgba(255,255,255,0.035); cursor: pointer; transition: border-color 150ms ease, transform 150ms ease, background 150ms ease; }
+.frameulator-actions button:first-child { grid-column: 1 / -1; border-color: rgba(105, 226, 208, 0.42); background: rgba(105, 226, 208, 0.1); }
+.frameulator-actions button:hover { transform: translateY(-1px); border-color: var(--frame-mint); background: rgba(105, 226, 208, 0.12); }
+.frameulator-actions button:focus-visible { outline: 2px solid var(--frame-orange); outline-offset: 2px; }
+
+.frameulator-services { display: grid; gap: 1px; margin-bottom: 22px; border: 1px solid var(--frame-line); border-radius: 12px; overflow: hidden; background: var(--frame-line); }
+.frameulator-service { display: flex; justify-content: space-between; gap: 12px; padding: 9px 10px; background: var(--frame-panel); color: #c9d8d5; font-size: 11px; }
+.frameulator-service span:last-child { color: var(--frame-mint); font: 600 9px ui-monospace, monospace; text-transform: uppercase; }
+
+.frameulator-eyes { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.frameulator-eye { position: relative; aspect-ratio: 1.35; overflow: hidden; border: 1px solid var(--frame-line); border-radius: 9px; background: #020303; }
+.frameulator-eye canvas { width: 100%; height: 100%; display: block; }
+.frameulator-report { min-height: 38px; margin-top: 15px; padding: 10px; border-radius: 9px; color: var(--frame-muted); background: rgba(255,255,255,0.025); font: 11px/1.45 ui-monospace, monospace; }
+.frameulator-report[data-passed="true"] { color: var(--frame-mint); background: rgba(105, 226, 208, 0.07); }
+
+@media (max-width: 800px) {
+  .frameulator-shell { grid-template-columns: 1fr; grid-template-rows: auto 460px auto; min-height: 0; }
+  .frameulator-stage { min-height: 460px; }
+  .frameulator-panel { border-left: 0; border-top: 1px solid var(--frame-line); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frameulator-actions button { transition: none; }
+}
+

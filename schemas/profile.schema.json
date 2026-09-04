@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/profile.schema.json",
+  "title": "Frameulator device profile",
+  "type": "object",
+  "required": ["id", "label", "version", "simulated", "evidenceLevel", "display", "hardware", "gpu", "openxr"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "label": { "type": "string", "minLength": 1 },
+    "version": { "const": "0.1.0" },
+    "simulated": { "const": true },
+    "evidenceLevel": { "const": "F1-browser-wasm" },
+    "display": {
+      "type": "object",
+      "required": ["eyeWidth", "eyeHeight", "refreshRatesHz", "defaultRefreshRateHz"]
+    },
+    "hardware": { "type": "object", "required": ["architecture", "memoryMiB"] },
+    "gpu": { "type": "object", "required": ["vendor", "family", "driver", "api"] },
+    "openxr": { "type": "object", "required": ["apiVersion", "runtime", "viewConfiguration"] }
+  },
+  "additionalProperties": false
+}
+
