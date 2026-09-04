@@ -68,15 +68,17 @@ test("native evidence remains separate from browser simulation", async () => {
       nativeFlatpakExecuted: false,
       hardwareSimulated: true,
       appId: "dev.luminarylabs.Agora",
-      version: "0.0.1",
+      version: "0.0.2",
       architecture: "x86_64",
       sourceCommit: "1".repeat(40),
       flatpakSha256: "2".repeat(64),
       browserWasmSha256: "3".repeat(64),
+      capsuleAbi: 2,
+      managementProtocol: "agora-management/2",
     },
   };
   const native = await lab.importEvidence({
-    schemaVersion: 1,
+    schemaVersion: 2,
     simulated: false,
     evidenceLevel: "F3-native-vulkan",
     producer: "fixture-native-runner",
@@ -84,6 +86,7 @@ test("native evidence remains separate from browser simulation", async () => {
     passed: true,
     generatedAt: "2026-09-04T00:00:00.000Z",
   });
+  assert.equal((await lab.latestNativeEvidence()).producer, "fixture-native-runner");
   const comparison = lab.compareEvidence({ simulation, native });
   assert.equal(comparison.comparable, true);
   assert.equal(comparison.simulationLevel, "F1-browser-wasm");

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/management-report.schema.json",
+  "title": "Frameulator Agora management evidence",
+  "type": "object",
+  "required": ["protocol", "simulatedDeployment", "nativeDeployment", "snapshot"],
+  "properties": {
+    "protocol": { "const": "agora-management/2" },
+    "simulatedDeployment": { "const": true },
+    "nativeDeployment": { "const": false },
+    "snapshot": { "$ref": "management-state.schema.json" }
+  },
+  "additionalProperties": false
+}

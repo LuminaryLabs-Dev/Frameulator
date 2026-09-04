@@ -60,7 +60,7 @@ export function queryService(
     case "compositor.status":
       return { queuedFrames: 0, presentedFrames: world.compositorFrames, focused: true, simulated: true };
     case "firmware.status":
-      return { state: world.firmwareState, version: "simulated-0.1.0", hardwareFirmware: false, simulated: true };
+      return { state: world.firmwareState, version: "simulated-0.2.0", hardwareFirmware: false, simulated: true };
     case "tracking.status":
       return { available: world.trackingAvailable, pose: world.headPose, source: "synthetic", simulated: true };
     case "controllers.status":

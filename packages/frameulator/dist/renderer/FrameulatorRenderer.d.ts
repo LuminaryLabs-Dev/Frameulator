@@ -16,6 +16,7 @@ export declare class FrameulatorRenderer {
     private readonly observer;
     private readonly applicationCube;
     private readonly applicationHalo;
+    private readonly portal;
     private readonly eyeCamera;
     private readonly eyeTargets;
     private readonly eyePixels;

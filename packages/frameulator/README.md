@@ -1,9 +1,9 @@
 # @luminarylabs/frameulator
 
-Lightweight Agora Flatpak verification and deterministic Rust/WASM simulation for Steam Frame-facing contracts. Browser reports remain F1/F2 simulation evidence; the package never claims that the native Flatpak was installed or executed.
+Lightweight Agora Flatpak verification and a fixed, single-screen MDM Lite workbench for Steam Frame-facing contracts. Agora's shared ABI 2 management core drives deploy, session, update, rollback, crash-recovery, project, and test state. Browser reports remain F1/F2 simulation evidence; the package never claims that the native Flatpak was installed or executed.
 
 ```bash
-npm install @luminarylabs/frameulator@0.1.0
+npm install @luminarylabs/frameulator@0.2.0
 ```
 
 ```js
@@ -15,7 +15,7 @@ const lab = await Frameulator.create({
   renderer: "auto",
   storage: "indexeddb",
   network: "disabled",
-  releaseRegistry: "/releases/agora-0.0.1-release.json",
+  releaseRegistry: "/releases/agora-0.0.2-release.json",
   trustedReleaseKeys: [{
     id: "luminary-release-2026",
     algorithm: "Ed25519",
@@ -24,6 +24,9 @@ const lab = await Frameulator.create({
 });
 
 await lab.selectFlatpak(fileInput.files[0]);
+await lab.rehearseDeploy();
+await lab.launchCapsule();
+await lab.stopCapsule();
 const report = await lab.runScenario("normal-session");
 await lab.destroy();
 ```

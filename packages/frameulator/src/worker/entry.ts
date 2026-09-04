@@ -1,11 +1,12 @@
 import { FrameulatorKernel } from "../FrameulatorKernel";
-import type { RpcRequest, RpcResponse } from "../types";
-import { BrowserCapsule, applyCapsuleEvent, runCapsuleScenario } from "../application/BrowserCapsule";
+import type { ManagementCommand, RpcRequest, RpcResponse } from "../types";
+import { BrowserCapsule, applyCapsuleEvent, applyManagementCommand, runCapsuleScenario } from "../application/BrowserCapsule";
 
 let kernel: FrameulatorKernel | undefined;
 let capsule: BrowserCapsule | undefined;
 
 async function dispatch(request: RpcRequest): Promise<unknown> {
+  if (request.protocol !== "frameulator/2") throw new Error("Frameulator Worker protocol 2 is required.");
   if (request.method === "initialize") {
     kernel = await FrameulatorKernel.create((request.parameters ?? {}) as never);
     return { ...kernel.snapshot, profile: kernel.profile, wasmAbi: 1 };
@@ -16,6 +17,20 @@ async function dispatch(request: RpcRequest): Promise<unknown> {
     case "loadCapsule":
       capsule = await BrowserCapsule.create(request.parameters as Uint8Array);
       return capsule.snapshot;
+    case "prepareRelease":
+      if (!capsule) throw new Error("Agora capsule is not loaded.");
+      capsule.prepareRelease(Number(request.parameters) || 1);
+      return { ...kernel.snapshot, applicationFrame: capsule.snapshot };
+    case "managementCommand": {
+      if (!capsule) throw new Error("Agora capsule is not loaded.");
+      const { command, value } = request.parameters as { command: ManagementCommand; value?: number };
+      applyManagementCommand(capsule, command, value);
+      if (command === "launch") kernel.start();
+      if (command === "stop") { kernel.stop(); kernel.step(0); }
+      if (command === "crash") kernel.injectEvent("runtime-exit");
+      if (command === "recover" || command === "remove") kernel.reset();
+      return { ...kernel.snapshot, applicationFrame: capsule.snapshot };
+    }
     case "unloadCapsule":
       capsule = undefined;
       return { unloaded: true };
@@ -58,7 +73,7 @@ async function dispatch(request: RpcRequest): Promise<unknown> {
 self.addEventListener("message", async (event: MessageEvent<RpcRequest>) => {
   const request = event.data;
   const response: RpcResponse = {
-    protocol: "frameulator/1",
+    protocol: "frameulator/2",
     requestId: request.requestId,
     ok: true,
   };

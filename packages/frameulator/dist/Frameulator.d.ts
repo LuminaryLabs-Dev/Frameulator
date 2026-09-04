@@ -1,9 +1,9 @@
 import type { ControllerState, FrameulatorEvent, FrameulatorOptions, EvidenceComparison, NativeEvidence, Pose, Scenario, ScenarioReport } from "./types";
-import type { ApplicationState, FlatpakInput, FlatpakVerification } from "./types";
+import type { ApplicationState, FlatpakInput, FlatpakVerification, ManagementScenario, ManagementSnapshot } from "./types";
 export declare class Frameulator extends EventTarget {
     private readonly transport;
     private readonly store;
-    readonly version = "0.1.0";
+    readonly version = "0.2.0";
     readonly simulated = true;
     private renderer?;
     private running;
@@ -13,6 +13,7 @@ export declare class Frameulator extends EventTarget {
     private importedEvidence?;
     private readonly applicationGate;
     private lastReport?;
+    private currentManagement?;
     private constructor();
     static create(options?: FrameulatorOptions): Promise<Frameulator>;
     get applicationState(): ApplicationState;
@@ -21,7 +22,18 @@ export declare class Frameulator extends EventTarget {
     removeApplication(): Promise<void>;
     setEyePreviews(left: HTMLCanvasElement, right: HTMLCanvasElement): void;
     start(): Promise<void>;
+    rehearseDeploy(): Promise<ManagementSnapshot>;
+    prepareDevice(): Promise<ManagementSnapshot>;
+    stopCapsule(): Promise<void>;
+    restartCapsule(): Promise<void>;
+    launchCapsule(): Promise<void>;
     stop(): Promise<void>;
+    simulateUpdate(generation?: number): Promise<ManagementSnapshot>;
+    simulateFailedUpdate(generation?: number): Promise<ManagementSnapshot>;
+    simulateRollback(): Promise<ManagementSnapshot>;
+    simulateCrash(): Promise<ManagementSnapshot>;
+    recoverCrash(): Promise<ManagementSnapshot>;
+    runManagementScenario(name: ManagementScenario): Promise<ManagementSnapshot>;
     setHeadPose(pose: Pose): Promise<void>;
     setControllerState(hand: "left" | "right", state: ControllerState): Promise<void>;
     injectEvent(event: FrameulatorEvent): Promise<void>;
@@ -31,6 +43,7 @@ export declare class Frameulator extends EventTarget {
     exportReport(): Promise<ScenarioReport>;
     latestReport(): Promise<ScenarioReport | undefined>;
     importEvidence(input: Blob | NativeEvidence): Promise<NativeEvidence>;
+    latestNativeEvidence(): Promise<NativeEvidence | undefined>;
     compareEvidence(options: {
         simulation: ScenarioReport;
         native?: NativeEvidence;
@@ -40,4 +53,7 @@ export declare class Frameulator extends EventTarget {
     private emit;
     private requireApplication;
     private applicationEvidence;
+    private managementEvidence;
+    private runManagementCommand;
+    private updateManagement;
 }

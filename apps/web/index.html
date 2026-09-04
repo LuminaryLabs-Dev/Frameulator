@@ -4,63 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050708" />
-    <meta name="description" content="Frameulator verifies an approved Agora Flatpak locally, then runs its matching browser capsule against simulated Steam Frame contracts." />
-    <title>Frameulator · Agora Flatpak contract laboratory</title>
+    <meta name="description" content="Frameulator is a single-screen Agora deployment, OpenXR, and evidence workbench for the simulated Steam Frame contract." />
+    <title>Frameulator · Agora operator workbench</title>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="Frameulator home"><span></span>Frameulator</a>
-      <nav aria-label="Primary navigation">
-        <a href="#laboratory">Laboratory</a>
-        <a href="#contracts">Contracts</a>
-        <a href="https://github.com/LuminaryLabs-Dev/Frameulator">Source</a>
-      </nav>
-      <span class="build">v0.1.0 · F1/F2</span>
-    </header>
-
-    <main id="top">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Verified Flatpak rehearsal</p>
-          <h1>Bring the build.<br /><em>Test its contract.</em></h1>
-          <p class="lede">Select an approved Agora Flatpak. Frameulator verifies it locally, loads the cryptographically matched Agora browser capsule, and rehearses OpenXR state, input, and stereo presentation.</p>
-          <div class="hero-actions">
-            <a class="primary" href="#laboratory">Open laboratory</a>
-            <button class="copy" type="button" data-copy>Copy CDN import</button>
-          </div>
-          <p class="truth">Your Flatpak stays on this device. The matching browser capsule runs—not the native Flatpak, Linux, SteamVR, Vulkan driver, firmware, or physical hardware.</p>
-        </div>
-        <div class="orbit" aria-hidden="true">
-          <div class="orbit-ring ring-a"></div><div class="orbit-ring ring-b"></div><div class="orbit-core">&lt;200</div>
-          <span class="orbit-label label-a">FLATPAK HASH</span><span class="orbit-label label-b">AGORA WASM</span><span class="orbit-label label-c">THREE.JS</span>
-        </div>
-      </section>
-
-      <section class="laboratory" id="laboratory">
-        <div class="section-heading">
-          <div><p class="eyebrow">Interactive proof surface</p><h2>Agora application laboratory</h2></div>
-          <p id="page-status" role="status">Flatpak required</p>
-        </div>
-        <frameulator-lab profile="steam-frame" scenario="normal-session"></frameulator-lab>
-      </section>
-
-      <section class="contracts" id="contracts">
-        <div class="section-heading"><div><p class="eyebrow">Nine observable boundaries</p><h2>What the approved capsule can rehearse</h2></div></div>
-        <div class="contract-grid">
-          <article><span>01</span><h3>ARM64 hardware</h3><p>ABI, memory pressure and timing contracts—not CPU instruction emulation.</p></article>
-          <article><span>02</span><h3>Adreno GPU</h3><p>Limits, budgets and failures—not proprietary driver execution.</p></article>
-          <article><span>03</span><h3>Vulkan</h3><p>Resource and submission validation rendered through Three.js/WebGL.</p></article>
-          <article><span>04</span><h3>OpenXR</h3><p>Session states, actions and stereo-view contracts driven by WASM.</p></article>
-          <article><span>05</span><h3>Compositor</h3><p>Focus, frame pacing and presentation queue behavior.</p></article>
-          <article><span>06</span><h3>Firmware</h3><p>Boot, update and fault state-machine responses.</p></article>
-          <article><span>07</span><h3>Tracking</h3><p>Synthetic poses, prediction, drift, loss and recovery.</p></article>
-          <article><span>08</span><h3>Controllers</h3><p>Left/right pose, action, button and axis contracts.</p></article>
-          <article><span>09</span><h3>Host services</h3><p>A Worker message bus that models sockets without opening them.</p></article>
-        </div>
-      </section>
-    </main>
-
-    <footer><span>Frameulator 0.1.0</span><span>Rust · WebAssembly · Three.js</span><span>MIT</span></footer>
+    <frameulator-lab profile="steam-frame" scenario="normal-session"></frameulator-lab>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

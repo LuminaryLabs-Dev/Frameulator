@@ -17,10 +17,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["appId", "version", "sourceCommit", "architecture", "flatpakFile", "flatpakSha256", "browserWasmFile", "browserWasmSha256", "executionMode"],
+            "required": ["appId", "version", "capsuleAbi", "managementProtocol", "sourceCommit", "architecture", "flatpakFile", "flatpakSha256", "browserWasmFile", "browserWasmSha256", "executionMode"],
             "properties": {
               "appId": { "const": "dev.luminarylabs.Agora" },
               "version": { "pattern": "^0\\.0\\.[0-9]+$" },
+              "capsuleAbi": { "const": 2 },
+              "managementProtocol": { "const": "agora-management/2" },
               "sourceCommit": { "pattern": "^[0-9a-f]{40}$" },
               "architecture": { "enum": ["x86_64", "aarch64"] },
               "flatpakFile": { "pattern": "\\.flatpak$" },

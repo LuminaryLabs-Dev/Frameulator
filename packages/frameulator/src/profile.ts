@@ -3,7 +3,7 @@ import type { FrameulatorProfile } from "./types";
 export const SteamFrameProfile: FrameulatorProfile = Object.freeze({
   id: "steam-frame",
   label: "Steam Frame browser contract",
-  version: "0.1.0",
+  version: "0.2.0",
   simulated: true,
   evidenceLevel: "F1-browser-wasm",
   display: {

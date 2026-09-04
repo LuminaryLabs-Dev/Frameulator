@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-09-04
 
 - Require an approved local Agora Flatpak before application sessions can run.
 - Add streaming SHA-256, signed release-registry verification, and exact capsule verification.
@@ -8,6 +8,9 @@
 - Record the Flatpak verification and native-execution boundary in every application report.
 - Remove the browser-VM direction and retain a lightweight static-site architecture.
 - Add a disabled-by-default static release configuration so maintainers can activate a signed Agora release without changing application code.
+- Replace the marketing page with a fixed full-viewport operator workbench.
+- Add Agora capsule ABI 2 and the shared MDM Lite deployment, session, project, update, rollback, crash, recovery, and bounded event model.
+- Add keyboard and gamepad workbench navigation plus browser-local panel/report metadata persistence.
 
 ## 0.1.0 - 2026-09-04
 

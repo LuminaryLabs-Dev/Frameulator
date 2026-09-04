@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/management-state.schema.json",
+  "title": "Frameulator Agora management snapshot",
+  "type": "object",
+  "required": ["protocol", "deviceState", "deploymentState", "applicationSessionState", "testState", "projectState", "currentRelease", "previousRelease", "eventCount", "lastEvent", "events"],
+  "properties": {
+    "protocol": { "const": "agora-management/2" },
+    "deviceState": { "enum": ["OFFLINE", "AVAILABLE", "DEGRADED", "FAILED"] },
+    "deploymentState": { "enum": ["ABSENT", "STAGING", "DEPLOYED", "UPDATING", "ROLLING_BACK", "REMOVING", "FAILED"] },
+    "applicationSessionState": { "enum": ["IDLE", "LAUNCHING", "RUNNING", "STOPPING", "CRASHED"] },
+    "testState": { "enum": ["NOT_RUN", "RUNNING", "PASSED", "FAILED", "BLOCKED"] },
+    "projectState": { "enum": ["EMPTY", "LOADED", "VALIDATED", "BUILT", "FAILED"] },
+    "currentRelease": { "type": "integer", "minimum": 0 },
+    "previousRelease": { "type": "integer", "minimum": 0 },
+    "eventCount": { "type": "integer", "minimum": 1 },
+    "lastEvent": { "type": "string", "minLength": 1 },
+    "events": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "required": ["sequence", "kind", "value"],
+        "properties": {
+          "sequence": { "type": "integer", "minimum": 0 },
+          "kind": { "type": "string", "minLength": 1 },
+          "value": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

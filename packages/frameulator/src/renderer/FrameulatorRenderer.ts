@@ -21,6 +21,7 @@ export class FrameulatorRenderer {
   private readonly observer = new ResizeObserver(() => this.resize());
   private readonly applicationCube: THREE.Mesh;
   private readonly applicationHalo: THREE.Mesh;
+  private readonly portal: THREE.Mesh;
   private readonly eyeCamera = new THREE.PerspectiveCamera(72, 180 / 132, 0.01, 30);
   private readonly eyeTargets = [
     new THREE.WebGLRenderTarget(180, 132, { depthBuffer: true }),
@@ -63,12 +64,12 @@ export class FrameulatorRenderer {
     this.buildController(this.controllers.right, 0xff7548);
     this.scene.add(this.head, this.controllers.left, this.controllers.right);
 
-    const portal = new THREE.Mesh(
+    this.portal = new THREE.Mesh(
       new THREE.TorusGeometry(1.25, 0.018, 12, 96),
       new THREE.MeshBasicMaterial({ color: 0x37cbbb, transparent: true, opacity: 0.65 }),
     );
-    portal.position.set(0, 1.45, -1.4);
-    this.scene.add(portal);
+    this.portal.position.set(0, 1.45, -1.4);
+    this.scene.add(this.portal);
 
     this.applicationCube = new THREE.Mesh(
       new THREE.BoxGeometry(0.48, 0.48, 0.48),
@@ -98,8 +99,12 @@ export class FrameulatorRenderer {
     this.applyController(this.controllers.left, snapshot.controllers.left);
     this.applyController(this.controllers.right, snapshot.controllers.right);
     if (snapshot.applicationFrame) {
-      this.applicationCube.visible = true;
-      this.applicationHalo.visible = true;
+      const running = snapshot.applicationFrame.management.applicationSessionState === "RUNNING";
+      this.applicationCube.visible = running;
+      this.applicationHalo.visible = running;
+      const portalMaterial = this.portal.material as THREE.MeshBasicMaterial;
+      portalMaterial.color.setHex(snapshot.applicationFrame.trackingAvailable ? 0x37cbbb : 0xff7548);
+      portalMaterial.opacity = running ? 0.88 : snapshot.applicationFrame.management.deploymentState === "DEPLOYED" ? 0.55 : 0.24;
       const phase = snapshot.applicationFrame.scenePhaseRadians;
       this.applicationCube.rotation.set(phase * 0.62, phase, phase * 0.28);
       this.applicationHalo.rotation.y = -phase * 0.45;
@@ -164,6 +169,8 @@ export class FrameulatorRenderer {
 
   private applyController(object: THREE.Object3D, state: ControllerState): void {
     if (state.pose) this.applyPose(object, state.pose);
+    const activation = Math.max(0, Math.min(1, state.trigger ?? 0));
+    object.scale.setScalar(1 + activation * 0.12);
   }
 
   private resize(): void {

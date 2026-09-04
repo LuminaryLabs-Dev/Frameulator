@@ -41,7 +41,7 @@ await build({
     __FRAMEULATOR_WASM_BASE64__: JSON.stringify(""),
     __FRAMEULATOR_WORKER_SOURCE__: JSON.stringify(workerSource),
   },
-  banner: { js: "/* Frameulator 0.1.0 | MIT */" },
+  banner: { js: "/* Frameulator 0.2.0 | MIT */" },
 });
 
 await build({
@@ -58,7 +58,7 @@ await build({
     __FRAMEULATOR_WASM_BASE64__: JSON.stringify(wasmBase64),
     __FRAMEULATOR_WORKER_SOURCE__: JSON.stringify(workerSource),
   },
-  banner: { js: "/* Frameulator 0.1.0 standalone | MIT */" },
+  banner: { js: "/* Frameulator 0.2.0 standalone | MIT */" },
 });
 
 await copyFile(wasmPath, resolve(dist, "frameulator.wasm"));

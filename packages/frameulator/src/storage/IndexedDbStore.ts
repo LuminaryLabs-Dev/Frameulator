@@ -1,13 +1,17 @@
-import type { ScenarioReport } from "../types";
+import type { NativeEvidence, ScenarioReport } from "../types";
 
 export interface ReportStore {
   save(report: ScenarioReport): Promise<void>;
   latest(): Promise<ScenarioReport | undefined>;
+  clear(): Promise<void>;
+  saveNative(evidence: NativeEvidence): Promise<void>;
+  latestNative(): Promise<NativeEvidence | undefined>;
   close(): void;
 }
 
 export class MemoryReportStore implements ReportStore {
   private report?: ScenarioReport;
+  private native?: NativeEvidence;
 
   async save(report: ScenarioReport): Promise<void> {
     this.report = structuredClone(report);
@@ -15,6 +19,19 @@ export class MemoryReportStore implements ReportStore {
 
   async latest(): Promise<ScenarioReport | undefined> {
     return this.report ? structuredClone(this.report) : undefined;
+  }
+
+  async clear(): Promise<void> {
+    this.report = undefined;
+    this.native = undefined;
+  }
+
+  async saveNative(evidence: NativeEvidence): Promise<void> {
+    this.native = structuredClone(evidence);
+  }
+
+  async latestNative(): Promise<NativeEvidence | undefined> {
+    return this.native ? structuredClone(this.native) : undefined;
   }
 
   close(): void {}
@@ -46,6 +63,21 @@ export class IndexedDbReportStore implements ReportStore {
     return this.transaction("readonly", (store) => store.get("latest"));
   }
 
+  async clear(): Promise<void> {
+    await Promise.all([
+      this.transaction("readwrite", (store) => store.delete("latest")),
+      this.transaction("readwrite", (store) => store.delete("latest-native")),
+    ]);
+  }
+
+  async saveNative(evidence: NativeEvidence): Promise<void> {
+    await this.transaction("readwrite", (store) => store.put(structuredClone(evidence), "latest-native"));
+  }
+
+  async latestNative(): Promise<NativeEvidence | undefined> {
+    return this.transaction("readonly", (store) => store.get("latest-native"));
+  }
+
   close(): void {
     this.database.close();
   }
@@ -59,4 +91,3 @@ export class IndexedDbReportStore implements ReportStore {
     });
   }
 }
-

@@ -151,8 +151,8 @@ export class FrameulatorKernel {
     }
 
     this.lastReport = {
-      schemaVersion: 1,
-      frameulatorVersion: "0.1.0",
+      schemaVersion: 2,
+      frameulatorVersion: "0.2.0",
       scenario: scenario.id,
       profile: this.profile.id,
       simulated: true,

@@ -37,10 +37,11 @@ const standalone = await readFile(resolve(packageRoot, "dist/frameulator.standal
 assert.doesNotMatch(standalone, /from\s*["'](?:three|https?:)/, "standalone build cannot have external imports");
 assert.doesNotMatch(standalone, /(?:@latest|\/main(?:\/|["'])|refs\/heads\/main)/, "standalone build cannot depend on mutable versions");
 assert.match(standalone, /frameulator/, "standalone build must contain Frameulator code");
+assert.match(standalone, /agora-management\/2/, "standalone build must contain Agora management ABI 2");
 
 const packageJson = JSON.parse(await readFile(resolve(packageRoot, "package.json"), "utf8"));
 assert.equal(packageJson.name, "@luminarylabs/frameulator");
-assert.equal(packageJson.version, "0.1.0");
+assert.equal(packageJson.version, "0.2.0");
 assert.equal(packageJson.publishConfig.access, "public");
 
 const packOutput = execFileSync("npm", ["pack", "--dry-run", "--json"], {
@@ -54,9 +55,14 @@ assert.ok(pack.files.every((file) => !/\.(?:pem|key|env)$/.test(file.path)));
 
 const site = await readFile(resolve(root, "docs/index.html"), "utf8");
 assert.match(site, /Frameulator/);
-assert.match(site, /Flatpak required/i);
 assert.doesNotMatch(site, /localhost/);
 assert.doesNotMatch(site, /qemu|alpine-frameulator|SharedArrayBuffer/i);
+assert.doesNotMatch(site, /class="(?:hero|contracts|site-header)"|<footer/i);
+const siteSource = await readFile(resolve(root, "apps/web/index.html"), "utf8");
+const siteCss = await readFile(resolve(root, "apps/web/src/site.css"), "utf8");
+assert.match(siteSource, /<frameulator-lab/);
+assert.doesNotMatch(siteSource, /class="(?:hero|contracts|site-header)"|<footer/i);
+assert.match(siteCss, /html, body[^}]+overflow:\s*hidden/s);
 const siteReleaseConfig = JSON.parse(await readFile(resolve(root, "docs/releases/config.json"), "utf8"));
 assert.deepEqual(siteReleaseConfig, {
   schemaVersion: 1,
@@ -70,6 +76,9 @@ assert.ok(
   publishedBytes < maximumPublishedBytes,
   `static site is ${(publishedBytes / 1048576).toFixed(2)} MB; it must remain below 200 MB`,
 );
+const hostWasmBytes = (await stat(resolve(packageRoot, "dist/frameulator.wasm"))).size;
+assert.ok(hostWasmBytes < 2 * 1024 * 1024, "Frameulator WASM must remain below 2 MB");
+assert.ok(publishedBytes < 20 * 1024 * 1024, "normal initial site download must remain below 20 MB");
 
 console.log(
   `release verification passed (${pack.files.length} packed files, ${(publishedBytes / 1048576).toFixed(2)} MB site)`,

@@ -7,7 +7,7 @@
       "type": "object",
       "required": ["protocol", "requestId", "method"],
       "properties": {
-        "protocol": { "const": "frameulator/1" },
+        "protocol": { "const": "frameulator/2" },
         "requestId": { "type": "integer", "minimum": 1 },
         "method": { "type": "string", "minLength": 1 },
         "parameters": {}
@@ -18,7 +18,7 @@
       "type": "object",
       "required": ["protocol", "requestId", "ok"],
       "properties": {
-        "protocol": { "const": "frameulator/1" },
+        "protocol": { "const": "frameulator/2" },
         "requestId": { "type": "integer", "minimum": 1 },
         "ok": { "type": "boolean" },
         "result": {},
@@ -28,4 +28,3 @@
     }
   ]
 }
-

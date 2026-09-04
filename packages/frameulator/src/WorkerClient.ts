@@ -47,7 +47,7 @@ export class WorkerClient {
 
   request(method: string, parameters?: unknown): Promise<any> {
     const requestId = ++this.requestId;
-    const request: RpcRequest = { protocol: "frameulator/1", requestId, method, parameters };
+    const request: RpcRequest = { protocol: "frameulator/2", requestId, method, parameters };
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
@@ -66,7 +66,10 @@ export class WorkerClient {
   }
 
   private receive(response: RpcResponse): void {
-    if (response.protocol !== "frameulator/1") return;
+    if (response.protocol !== "frameulator/2") {
+      this.failAll(new Error("Frameulator Worker protocol mismatch; version 2 is required."));
+      return;
+    }
     const pending = this.pending.get(response.requestId);
     if (!pending) return;
     clearTimeout(pending.timer);

@@ -7,7 +7,7 @@ import { Frameulator, IncrementalSha256, sha256Blob, verifyReleaseRegistry } fro
 const wasmBytes = await readFile(new URL("../dist/frameulator.wasm", import.meta.url));
 const capsuleBytes = await readFile(new URL("./fixtures/agora-test-capsule.wasm", import.meta.url));
 
-function flatpak(bytes, name = "Agora-0.0.1-x86_64.flatpak") {
+function flatpak(bytes, name = "Agora-0.0.2-x86_64.flatpak") {
   const blob = new Blob([bytes], { type: "application/vnd.flatpak" });
   Object.defineProperty(blob, "name", { value: name });
   return blob;
@@ -36,7 +36,7 @@ test("sessions are rejected until an approved Flatpak is verified", async () => 
   await assert.rejects(lab.selectFlatpak(unapproved), /trusted Agora release registry/);
   assert.equal(lab.applicationState, "REJECTED");
   assert.equal(lab.flatpakVerification.accepted, false);
-  assert.equal(lab.flatpakVerification.fileName, "Agora-0.0.1-x86_64.flatpak");
+  assert.equal(lab.flatpakVerification.fileName, "Agora-0.0.2-x86_64.flatpak");
   assert.equal(lab.flatpakVerification.size, unapproved.size);
   await lab.removeApplication();
   assert.equal(lab.applicationState, "EMPTY");
@@ -62,12 +62,14 @@ test("release registries require a valid Ed25519 signature", async () => {
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   const release = {
     appId: "dev.luminarylabs.Agora",
-    version: "0.0.1",
+    version: "0.0.2",
+    capsuleAbi: 2,
+    managementProtocol: "agora-management/2",
     sourceCommit: "a".repeat(40),
     architecture: "x86_64",
-    flatpakFile: "Agora-0.0.1-x86_64.flatpak",
+    flatpakFile: "Agora-0.0.2-x86_64.flatpak",
     flatpakSha256: "b".repeat(64),
-    browserWasmFile: "agora-0.0.1-browser.wasm",
+    browserWasmFile: "agora-0.0.2-browser.wasm",
     browserWasmSha256: "c".repeat(64),
     executionMode: "browser-wasm-capsule",
   };
@@ -82,7 +84,7 @@ test("release registries require a valid Ed25519 signature", async () => {
   };
   const keys = [{ id: "test-key", algorithm: "Ed25519", publicKeyBase64: rawPublicKey }];
   assert.deepEqual(await verifyReleaseRegistry(registry, keys), [release]);
-  registry.payload.releases[0].version = "0.0.2";
+  registry.payload.releases[0].version = "0.0.3";
   await assert.rejects(verifyReleaseRegistry(registry, keys), /signature verification failed/);
 });
 
@@ -91,10 +93,12 @@ test("an exact approved Flatpak loads its matched capsule and emits bounded evid
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   const release = {
     appId: "dev.luminarylabs.Agora",
-    version: "0.0.1",
+    version: "0.0.2",
+    capsuleAbi: 2,
+    managementProtocol: "agora-management/2",
     sourceCommit: "d".repeat(40),
     architecture: "x86_64",
-    flatpakFile: "Agora-0.0.1-x86_64.flatpak",
+    flatpakFile: "Agora-0.0.2-x86_64.flatpak",
     flatpakSha256: createHash("sha256").update(flatpakBytes).digest("hex"),
     browserWasmFile: `data:application/wasm;base64,${capsuleBytes.toString("base64")}`,
     browserWasmSha256: createHash("sha256").update(capsuleBytes).digest("hex"),
@@ -131,5 +135,66 @@ test("an exact approved Flatpak loads its matched capsule and emits bounded evid
   assert.equal(report.application.nativeFlatpakInstalled, false);
   assert.equal(report.application.nativeFlatpakExecuted, false);
   assert.equal(report.application.executionMode, "browser-wasm-capsule");
+  assert.equal(report.application.capsuleAbi, 2);
+  assert.equal(report.management.snapshot.deploymentState, "DEPLOYED");
+  assert.equal(report.management.snapshot.applicationSessionState, "RUNNING");
+  assert.equal(report.management.snapshot.testState, "PASSED");
+  assert.equal(report.management.snapshot.events.length, report.management.snapshot.eventCount);
+  await lab.removeApplication();
+  assert.equal(await lab.latestReport(), undefined);
+  await lab.destroy();
+});
+
+test("management actions enforce deploy, launch, crash, recovery, update, and rollback", async () => {
+  const flatpakBytes = new TextEncoder().encode("deterministic Agora management Flatpak");
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const release = {
+    appId: "dev.luminarylabs.Agora",
+    version: "0.0.2",
+    capsuleAbi: 2,
+    managementProtocol: "agora-management/2",
+    sourceCommit: "e".repeat(40),
+    architecture: "x86_64",
+    flatpakFile: "Agora-0.0.2-x86_64.flatpak",
+    flatpakSha256: createHash("sha256").update(flatpakBytes).digest("hex"),
+    browserWasmFile: `data:application/wasm;base64,${capsuleBytes.toString("base64")}`,
+    browserWasmSha256: createHash("sha256").update(capsuleBytes).digest("hex"),
+    executionMode: "browser-wasm-capsule",
+  };
+  const payload = { releases: [release] };
+  const registry = {
+    schemaVersion: 1,
+    algorithm: "Ed25519",
+    keyId: "management-key",
+    payload,
+    signature: sign(null, Buffer.from(JSON.stringify(payload)), privateKey).toString("base64"),
+  };
+  const lab = await Frameulator.create({
+    wasmBytes,
+    worker: false,
+    renderer: "none",
+    storage: "memory",
+    releaseRegistry: registry,
+    trustedReleaseKeys: [{
+      id: "management-key",
+      algorithm: "Ed25519",
+      publicKeyBase64: publicKey.export({ format: "der", type: "spki" }).subarray(-32).toString("base64"),
+    }],
+  });
+  await lab.selectFlatpak(flatpak(flatpakBytes, "Agora-0.0.2-x86_64.flatpak"));
+  await assert.rejects(lab.start(), /DEPLOYMENT_REQUIRED/);
+  assert.equal((await lab.rehearseDeploy()).deploymentState, "DEPLOYED");
+  await lab.start();
+  assert.equal((await lab.simulateCrash()).applicationSessionState, "CRASHED");
+  assert.equal((await lab.recoverCrash()).applicationSessionState, "IDLE");
+  await lab.start();
+  await lab.stop();
+  assert.equal((await lab.simulateUpdate(2)).currentRelease, 2);
+  assert.equal((await lab.simulateRollback()).currentRelease, 1);
+  const recovery = await lab.runManagementScenario("crash-recovery");
+  assert.equal(recovery.applicationSessionState, "RUNNING");
+  assert.equal(recovery.lastEvent, "SESSION_RUNNING");
+  await lab.removeApplication();
+  assert.equal(lab.applicationState, "EMPTY");
   await lab.destroy();
 });

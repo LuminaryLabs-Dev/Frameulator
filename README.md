@@ -2,9 +2,11 @@
 
 Frameulator is a lightweight browser laboratory for approved Agora Flatpak releases. It hashes a user-selected Flatpak locally, matches it against an Ed25519-signed release registry, verifies the paired Agora browser capsule, runs that capsule in a Web Worker, and renders an inspectable stereo environment with Three.js.
 
+The website is a fixed, single-screen operator workbench rather than a landing page. It exercises Agora's shared **MDM Lite** contract: one approved release, one simulated Steam Frame, one Nexus project, and one application session. Package, device, deployment, session, test, log, and proof state stay visible without document scrolling.
+
 > **Evidence boundary:** Frameulator verifies the identity of an approved Flatpak but does not install or execute its native binary. It executes matching Agora-owned WebAssembly and produces **F1/F2 browser simulation evidence**. Native Flatpak, Vulkan, OpenXR runtime, and hardware claims require separately imported evidence.
 
-## What 0.1.0 implements
+## What 0.2.0 implements
 
 - ARM64 hardware capability and timing contract model.
 - Qualcomm/Adreno capability and resource-budget model.
@@ -20,6 +22,9 @@ Frameulator is a lightweight browser laboratory for approved Agora Flatpak relea
 - Streaming local SHA-256 with a default 200 MB bundle limit.
 - Ed25519 release-registry verification and exact browser-capsule checksum verification.
 - Agora browser-capsule execution in the same Worker as the simulated host contract.
+- Shared Agora capsule ABI 2 management for deploy, launch, stop, update, rollback, removal, crash, recovery, project validation, and bounded event evidence.
+- A responsive full-viewport workbench with inspector drawers, keyboard shortcuts, gamepad focus/click navigation, and no marketing-page shell.
+- Persistent latest-report metadata and panel preference without persisting selected Flatpak bytes.
 
 ## Repository outputs
 
@@ -33,10 +38,10 @@ Frameulator is a lightweight browser laboratory for approved Agora Flatpak relea
 
 ## Install
 
-After `0.1.0` is published to npm:
+After `0.2.0` is published to npm:
 
 ```bash
-npm install @luminarylabs/frameulator@0.1.0
+npm install @luminarylabs/frameulator@0.2.0
 ```
 
 ```js
@@ -46,7 +51,7 @@ const lab = await Frameulator.create({
   container: document.querySelector("#frameulator"),
   profile: "steam-frame",
   network: "disabled",
-  releaseRegistry: "/releases/agora-0.0.1-release.json",
+  releaseRegistry: "/releases/agora-0.0.2-release.json",
   trustedReleaseKeys: [{
     id: "luminary-release-2026",
     algorithm: "Ed25519",
@@ -55,6 +60,9 @@ const lab = await Frameulator.create({
 });
 
 await lab.selectFlatpak(fileInput.files[0]);
+await lab.rehearseDeploy();
+await lab.launchCapsule();
+await lab.stopCapsule();
 const report = await lab.run("normal-session");
 console.log(report.simulated, report.evidenceLevel);
 ```
@@ -66,7 +74,7 @@ Once the public npm version exists, a static page can use the immutable version 
 ```html
 <script type="module">
   import { defineFrameulatorElement } from
-    "https://cdn.jsdelivr.net/npm/@luminarylabs/frameulator@0.1.0/dist/frameulator.standalone.js";
+    "https://cdn.jsdelivr.net/npm/@luminarylabs/frameulator@0.2.0/dist/frameulator.standalone.js";
 
   defineFrameulatorElement();
 </script>
@@ -94,6 +102,8 @@ The selected file is streamed through the hash function and is never transmitted
 
 Until a signed Agora release registry is configured, the public laboratory remains in `EMPTY` and correctly rejects every Flatpak.
 
+Frameulator does not contain Agora by default. The uploaded, approved Flatpak is the authorization gate; the signed registry then selects the exact ABI 2 capsule built from the same Agora source commit. Deployment buttons say **rehearse** or **simulate** because no browser-side native installation occurs.
+
 The static demonstration reads `apps/web/public/releases/config.json` before defining the custom element. It is deliberately committed with `enabled: false`; a release maintainer enables it only after copying the signed registry and matched capsule into the deployed `releases/` directory and adding the corresponding public Ed25519 key. No private key belongs in the website repository.
 
 ## Native evidence comparison
@@ -105,7 +115,7 @@ const native = await lab.importEvidence(file);
 const comparison = lab.compareEvidence({ simulation: report, native });
 ```
 
-Zip containers and native Lavapipe binaries are deferred; browser 0.1.0 accepts JSON evidence only.
+Zip containers and native Lavapipe binaries are deferred; browser 0.2.0 accepts JSON evidence only.
 
 ## Build and verify
 
@@ -127,7 +137,7 @@ Then open `http://127.0.0.1:4173/Frameulator/`.
 
 ## Publishing
 
-The repository does not publish automatically. A maintainer who controls the `@luminarylabs` npm scope must verify the release, tag the exact commit as `v0.1.0`, and run:
+The repository does not publish automatically. A maintainer who controls the `@luminarylabs` npm scope must verify the release, tag the exact commit as `v0.2.0`, and run:
 
 ```bash
 npm publish --access public --workspace @luminarylabs/frameulator

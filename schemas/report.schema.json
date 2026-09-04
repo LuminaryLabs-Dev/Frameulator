@@ -3,10 +3,10 @@
   "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/report.schema.json",
   "title": "Frameulator browser simulation report",
   "type": "object",
-  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "frameCount", "elapsedMilliseconds", "assertions", "services", "generatedAt", "application"],
+  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "frameCount", "elapsedMilliseconds", "assertions", "services", "generatedAt", "application", "management"],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "frameulatorVersion": { "const": "0.1.0" },
+    "schemaVersion": { "const": 2 },
+    "frameulatorVersion": { "const": "0.2.0" },
     "scenario": { "type": "string" },
     "profile": { "type": "string" },
     "simulated": { "const": true },
@@ -20,7 +20,7 @@
     "generatedAt": { "type": "string", "format": "date-time" },
     "application": {
       "type": "object",
-      "required": ["flatpakUploaded", "flatpakHashVerified", "matchingAgoraCodeExecuted", "executionMode", "nativeFlatpakInstalled", "nativeFlatpakExecuted", "hardwareSimulated", "appId", "version", "architecture", "sourceCommit", "flatpakSha256", "browserWasmSha256"],
+      "required": ["flatpakUploaded", "flatpakHashVerified", "matchingAgoraCodeExecuted", "executionMode", "nativeFlatpakInstalled", "nativeFlatpakExecuted", "hardwareSimulated", "appId", "version", "architecture", "sourceCommit", "flatpakSha256", "browserWasmSha256", "capsuleAbi", "managementProtocol"],
       "properties": {
         "flatpakUploaded": { "const": true },
         "flatpakHashVerified": { "const": true },
@@ -34,7 +34,20 @@
         "architecture": { "enum": ["x86_64", "aarch64"] },
         "sourceCommit": { "pattern": "^[0-9a-f]{40}$" },
         "flatpakSha256": { "pattern": "^[0-9a-f]{64}$" },
-        "browserWasmSha256": { "pattern": "^[0-9a-f]{64}$" }
+        "browserWasmSha256": { "pattern": "^[0-9a-f]{64}$" },
+        "capsuleAbi": { "const": 2 },
+        "managementProtocol": { "const": "agora-management/2" }
+      },
+      "additionalProperties": false
+    },
+    "management": {
+      "type": "object",
+      "required": ["protocol", "simulatedDeployment", "nativeDeployment", "snapshot"],
+      "properties": {
+        "protocol": { "const": "agora-management/2" },
+        "simulatedDeployment": { "const": true },
+        "nativeDeployment": { "const": false },
+        "snapshot": { "$ref": "management-state.schema.json" }
       },
       "additionalProperties": false
     }

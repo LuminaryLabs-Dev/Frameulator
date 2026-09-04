@@ -33,6 +33,9 @@ function exactBuffer(bytes: Uint8Array): ArrayBuffer {
 function validateRelease(release: AgoraRelease): void {
   if (release.appId !== "dev.luminarylabs.Agora") throw new Error("Release registry contains an unsupported application ID.");
   if (!/^0\.0\.\d+$/.test(release.version)) throw new Error("Release registry contains an unsupported Agora version.");
+  if (release.capsuleAbi !== 2 || release.managementProtocol !== "agora-management/2") {
+    throw new Error("Release registry contains an unsupported Agora management capsule.");
+  }
   if (!["x86_64", "aarch64"].includes(release.architecture)) throw new Error("Release registry contains an unsupported architecture.");
   if (!/^[0-9a-f]{40}$/.test(release.sourceCommit)) throw new Error("Release registry contains an invalid source commit.");
   if (!release.flatpakFile.toLowerCase().endsWith(".flatpak")) throw new Error("Release registry contains an invalid Flatpak filename.");
