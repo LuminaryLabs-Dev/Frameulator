@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "scope": "Production renderer/direct-RGBA pointer methods with GPU/DOM/raycast test seams and real ApplicationHost validation; not browser visual proof",
+  "cases": [
+    "uncaptured pointermove button -1 becomes 0 on both paths",
+    "captured pointermove retains pressed button on both paths",
+    "renderer off-surface pointerup emits cancel without activation",
+    "renderer outside-canvas pointerup cancels even if raycast hit exists",
+    "direct-preview outside release cancels without activation",
+    "capture clears after cancellation",
+    "normal inside click activates once on both paths",
+    "pointercancel and lostpointercapture preserve valid button identity"
+  ],
+  "forwardedInputCount": 19
+}

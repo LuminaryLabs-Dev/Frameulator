@@ -1,33 +1,9 @@
 # Architecture
 
-Frameulator has no remote application backend or browser Linux VM. The static page hashes a selected Flatpak locally and verifies its identity through a signed release registry. Only then does the Worker instantiate the matching Agora browser capsule beside the Frameulator contract kernel. IndexedDB stores reports, while Three.js renders the capsule-driven validation scene on the main thread.
+The generic ApplicationHost owns one application instance and the independent FrameulatorKernel. A shared serialized dispatcher is used by local transport and the browser Worker. Explicit adapter factories are trusted host code; there is no dynamic user-code loader.
 
-```text
-Local Flatpak → streaming SHA-256 → signed registry match
-                                      ↓
-Static page → full-screen Web Component → Worker RPC v2 → Frameulator host kernel
-                                                ↘ Agora ABI 2 management capsule
-                                                ↘ Three.js stereo renderer
-                                                ↘ bounded IndexedDB reports
-```
+Adapters own application logic. They implement start, stop, reset, step, input, snapshot and dispose, with optional named actions. The renderer consumes bounded RGBA surfaces without product branches. The neutral sample is an independently authored browser-compatible adapter. External application integrations are verified separately and are not included in this public repository.
 
-The modular package emits a separate Worker and host WASM file for strict CSP and caching. The standalone package embeds the Worker source and host WASM bytes in one ESM file for jsDelivr use. A verified Agora capsule remains a separate immutable release file. Neither mode requires `SharedArrayBuffer`.
+Hash/signature verification is independent of JS injection. The signed-package gate verifies identity and artifact bytes but never executes a native binary. Legacy product ABI remains archived unchanged.
 
-The Flatpak itself is not parsed, installed, or executed in the browser. Its exact SHA-256 acts as the release identity. Native release CI must verify and sign that hash before publishing the registry.
-
-## Operator workbench
-
-The document itself never scrolls. A command bar, workflow rail, Three.js stage, contextual inspector, and status bar fill the viewport. Package upload remains the gate. After verification, the shared Agora management core authorizes deployment rehearsal, session launch, update, rollback, removal, crash recovery, project validation, and tests. Frameulator supplies the simulated device; it does not maintain an independent success state.
-
-## Validation boundary
-
-| Level | Meaning | Produced in the browser |
-| --- | --- | --- |
-| F1 | Deterministic host and matching Agora-capsule simulation | Yes |
-| F2 | Three.js stereo visualization and browser input | Yes |
-| F3 | Native Lavapipe Vulkan run | No; import later as external evidence |
-| F4 | Monado or SteamVR OpenXR run | No |
-| F5 | ARM64 VM and Flatpak run | No |
-| F6 | Physical Steam Frame run | No |
-
-Frameulator never promotes an F1/F2 result to F3 or higher.
+Schema 3 reports distinguish host-kernel assertions, application execution and externally supplied native reports. Interactive snapshots and successful kernel scenarios do not claim application correctness. Headset poses, services, stereo previews and application presentation are simulation only.

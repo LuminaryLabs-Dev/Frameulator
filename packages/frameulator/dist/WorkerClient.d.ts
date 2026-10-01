@@ -3,6 +3,7 @@ export declare class WorkerClient {
     private readonly worker;
     private readonly pending;
     private requestId;
+    private destroyed;
     private blobUrl?;
     private constructor();
     static create(options: FrameulatorOptions): Promise<WorkerClient>;

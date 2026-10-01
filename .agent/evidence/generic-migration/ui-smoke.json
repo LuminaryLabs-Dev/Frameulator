@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-10-01T20:14:14.073516+00:00",
+  "scope": "Generic workbench lifecycle/control gating using real Frameulator and minimal DOM stubs. This is not browser-render or visual proof.",
+  "result": "passed",
+  "command": "npm run build:package && node .agent/evidence/generic-migration/ui-smoke.mjs",
+  "cases": [
+    "empty state enables sample and disables start",
+    "loading neutral adapter reaches READY",
+    "two simultaneous UI start calls leave RUNNING with Start disabled",
+    "advance action increments count",
+    "stop reaches STOPPED and disables advance",
+    "reset reaches READY and count zero",
+    "remove reaches EMPTY and re-enables sample",
+    "reload and restart succeed"
+  ],
+  "checks": {
+    "typescript": "npm run check passed",
+    "packageBuild": "npm run build:package passed",
+    "siteBuild": "npm run build:site passed; existing >500kB Three.js chunk warning",
+    "packageTests": "Final npm run verify: 44/44 package tests, 5/5 monorepo tests"
+  },
+  "browserVisualQA": {
+    "status": "blocked",
+    "url": "http://127.0.0.1:5173/Frameulator/",
+    "error": "Cloud browser reported net::ERR_BLOCKED_BY_CLIENT",
+    "screenshotVerified": false
+  },
+  "files": [
+    "packages/frameulator/src/element/frameulator-element.ts",
+    "packages/frameulator/src/renderer/FrameulatorRenderer.ts",
+    "packages/frameulator/src/styles.css",
+    "apps/web/src/main.ts",
+    "apps/web/index.html"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "name": "@luminarylabs/frameulator",
-  "version": "0.2.0",
-  "description": "Single-screen Agora Flatpak, MDM Lite, and OpenXR contract workbench for static sites.",
+  "version": "0.3.0",
+  "description": "Generic application-adapter and XR contract simulation workbench for static sites.",
   "type": "module",
   "sideEffects": false,
   "files": [

@@ -1,0 +1,172 @@
+# Frameulator
+
+Frameulator is a **cross-platform virtual Steam Frame development device**. Its long-term role is to let development tools, applications, Android/SteamOS runtimes, and automated QA target a software-defined Frame without requiring physical hardware.
+
+The repository is now structured as a monorepo with strict boundaries:
+
+```text
+core/                    host-neutral virtual-device model and protocols
+services/runtime/        unprivileged long-running frameulatord
+services/driver-service/ privileged native-driver boundary
+drivers/                 Windows, Linux, and macOS adapters
+runtimes/                Android and SteamOS execution boundaries
+app/desktop/             developer control client
+sdk/                     automation API
+```
+
+**Current evidence boundary:** the native driver adapters intentionally fail closed. Portable-mode contracts and the existing browser simulation are implemented, but native USB/device enumeration, native Android/SteamOS execution, and physical-hardware equivalence are not yet proven.
+
+The existing 0.2.0 browser laboratory remains the lightweight F1/F2 simulation tier and is retained below.
+
+---
+
+## Browser laboratory — 0.2.0
+
+Frameulator is a lightweight browser laboratory for approved Agora Flatpak releases. It hashes a user-selected Flatpak locally, matches it against an Ed25519-signed release registry, verifies the paired Agora browser capsule, runs that capsule in a Web Worker, and renders an inspectable stereo environment with Three.js.
+
+The website is a fixed, single-screen operator workbench rather than a landing page. It exercises Agora's shared **MDM Lite** contract: one approved release, one simulated Steam Frame, one Nexus project, and one application session. Package, device, deployment, session, test, log, and proof state stay visible without document scrolling.
+
+> **Evidence boundary:** Frameulator verifies the identity of an approved Flatpak but does not install or execute its native binary. It executes matching Agora-owned WebAssembly and produces **F1/F2 browser simulation evidence**. Native Flatpak, Vulkan, OpenXR runtime, and hardware claims require separately imported evidence.
+
+## What 0.2.0 implements
+
+- ARM64 hardware capability and timing contract model.
+- Qualcomm/Adreno capability and resource-budget model.
+- Vulkan-like device, resource, and submission contract model.
+- OpenXR 1.1 session lifecycle state machine in Rust/WASM.
+- Gamescope-like frame queue, focus, and pacing model.
+- Deterministic headset firmware lifecycle model.
+- Synthetic head tracking, prediction, loss, and recovery.
+- Virtual left and right Frame controller state.
+- Browser Worker message bus for host-service and socket contracts.
+- Three.js environment, stereo framebuffer previews, scenarios, reports, and IndexedDB persistence.
+- Mandatory `.flatpak` selection before an application session can run.
+- Streaming local SHA-256 with a default 200 MB bundle limit.
+- Ed25519 release-registry verification and exact browser-capsule checksum verification.
+- Agora browser-capsule execution in the same Worker as the simulated host contract.
+- Shared Agora capsule ABI 2 management for deploy, launch, stop, update, rollback, removal, crash, recovery, project validation, and bounded event evidence.
+- A responsive full-viewport workbench with inspector drawers, keyboard shortcuts, gamepad focus/click navigation, and no marketing-page shell.
+- Persistent latest-report metadata and panel preference without persisting selected Flatpak bytes.
+
+## Repository outputs
+
+| Output | Location | Purpose |
+| --- | --- | --- |
+| npm package | `packages/frameulator` | `@luminarylabs/frameulator` source and package files |
+| Modular ESM | `packages/frameulator/dist/frameulator.js` | Bundler/browser module with external Three.js dependency |
+| Standalone ESM | `packages/frameulator/dist/frameulator.standalone.js` | One-file CDN build containing Three.js, Worker code, and WASM |
+| Static website | `docs/` | GitHub Pages-ready demonstration site |
+| Rust kernel | `packages/frameulator/rust` | Dependency-free deterministic state core |
+
+## Install
+
+After `0.2.0` is published to npm:
+
+```bash
+npm install @luminarylabs/frameulator@0.2.0
+```
+
+```js
+import { Frameulator } from "@luminarylabs/frameulator";
+
+const lab = await Frameulator.create({
+  container: document.querySelector("#frameulator"),
+  profile: "steam-frame",
+  network: "disabled",
+  releaseRegistry: "/releases/agora-0.0.2-release.json",
+  trustedReleaseKeys: [{
+    id: "luminary-release-2026",
+    algorithm: "Ed25519",
+    publicKeyBase64: trustedPublicKey,
+  }],
+});
+
+await lab.selectFlatpak(fileInput.files[0]);
+await lab.rehearseDeploy();
+await lab.launchCapsule();
+await lab.stopCapsule();
+const report = await lab.run("normal-session");
+console.log(report.simulated, report.evidenceLevel);
+```
+
+## Exact jsDelivr import
+
+Once the public npm version exists, a static page can use the immutable version URL:
+
+```html
+<script type="module">
+  import { defineFrameulatorElement } from
+    "https://cdn.jsdelivr.net/npm/@luminarylabs/frameulator@0.2.0/dist/frameulator.standalone.js";
+
+  defineFrameulatorElement();
+</script>
+
+<frameulator-lab profile="steam-frame" scenario="normal-session"></frameulator-lab>
+```
+
+Never use `@latest`, an untagged GitHub branch, or a branch name in production embeds.
+
+## Worker modes
+
+```js
+await Frameulator.create({ worker: "inline" }); // default; Blob Worker
+await Frameulator.create({ worker: false }); // main-thread fallback
+await Frameulator.create({ workerUrl: "/frameulator.worker.js" }); // strict CSP
+```
+
+The build does not require `SharedArrayBuffer`, cross-origin isolation, QEMU, or a Linux image. Strict Content Security Policies that reject `blob:` Workers should self-host the modular Worker and WASM files.
+
+## Approved release contract
+
+Frameulator does not trust a `.flatpak` filename or execute arbitrary uploads. The host supplies an Ed25519 public key and a signed registry generated by Agora's release tooling. The registry binds one exact Flatpak SHA-256 to one exact Agora capsule SHA-256 and source commit.
+
+The selected file is streamed through the hash function and is never transmitted or retained by Frameulator. Once its hash matches, the capsule is loaded relative to the registry URL and independently verified before WebAssembly instantiation. Unknown Flatpaks, modified capsules, invalid signatures, unsupported application IDs, and unsupported versions are rejected.
+
+Until a signed Agora release registry is configured, the public laboratory remains in `EMPTY` and correctly rejects every Flatpak.
+
+Frameulator does not contain Agora by default. The uploaded, approved Flatpak is the authorization gate; the signed registry then selects the exact ABI 2 capsule built from the same Agora source commit. Deployment buttons say **rehearse** or **simulate** because no browser-side native installation occurs.
+
+The static demonstration reads `apps/web/public/releases/config.json` before defining the custom element. It is deliberately committed with `enabled: false`; a release maintainer enables it only after copying the signed registry and matched capsule into the deployed `releases/` directory and adding the corresponding public Ed25519 key. No private key belongs in the website repository.
+
+## Native evidence comparison
+
+Frameulator can import a `.frameproof.json` produced by a separate native runner and compare its scenario identity with a browser report. Imported evidence must say `simulated: false` and use an F3–F6 evidence label. Flatpak hash verification and matching capsule execution never promote a browser result to native evidence.
+
+```js
+const native = await lab.importEvidence(file);
+const comparison = lab.compareEvidence({ simulation: report, native });
+```
+
+Zip containers and native Lavapipe binaries are deferred; browser 0.2.0 accepts JSON evidence only.
+
+## Build and verify
+
+Requirements: Node.js 22+, npm, Rust 1.89+, and the `wasm32-unknown-unknown` target.
+
+```bash
+rustup target add wasm32-unknown-unknown
+npm ci
+npm run verify
+```
+
+`npm run verify` builds the Rust/WASM kernel, modular and standalone packages, the static site, declarations, tests, and `npm pack --dry-run` checks. Preview the Pages artifact locally with:
+
+```bash
+node scripts/serve-docs.mjs
+```
+
+Then open `http://127.0.0.1:4173/Frameulator/`.
+
+## Publishing
+
+The repository does not publish automatically. A maintainer who controls the `@luminarylabs` npm scope must verify the release, tag the exact commit as `v0.2.0`, and run:
+
+```bash
+npm publish --access public --workspace @luminarylabs/frameulator
+```
+
+Configure GitHub Pages to deploy the `docs/` directory from `main`. GitHub and npm publishing are release-time operations; the installed module never contacts GitHub at runtime.
+
+## License
+
+MIT. Third-party packages retain their own licenses and are listed by the npm lockfile.

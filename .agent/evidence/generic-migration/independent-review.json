@@ -1,0 +1,24 @@
+{
+  "schema": "frameulator.independent-review/1",
+  "reviewedAt": "2026-10-01T20:15:39.840646+00:00",
+  "verdict": "approved-local-source",
+  "blockers": [],
+  "independentChecks": [
+    "44 package tests",
+    "5 monorepo tests",
+    "19 separately verified external integration tests",
+    "TypeScript",
+    "pointer smoke19inputs",
+    "stale-success failure repro now public/current/exported FAILED and passed:false",
+    "139 pre-sanitization source hashes; public subset rechecked separately",
+    "framebuffer source/capture hashes",
+    "132 archived Git blobs/SHA256",
+    "root and package MIT notices unchanged"
+  ],
+  "remainingGates": [
+    "Parent/user remote publication authorization",
+    "Browser DOM/CSS/WebGL verification locally blocked",
+    "Native/headset proof unsupported"
+  ],
+  "sourceChangedAfterReview": false
+}

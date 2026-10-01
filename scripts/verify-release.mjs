@@ -37,11 +37,12 @@ const standalone = await readFile(resolve(packageRoot, "dist/frameulator.standal
 assert.doesNotMatch(standalone, /from\s*["'](?:three|https?:)/, "standalone build cannot have external imports");
 assert.doesNotMatch(standalone, /(?:@latest|\/main(?:\/|["'])|refs\/heads\/main)/, "standalone build cannot depend on mutable versions");
 assert.match(standalone, /frameulator/, "standalone build must contain Frameulator code");
-assert.match(standalone, /agora-management\/2/, "standalone build must contain Agora management ABI 2");
+assert.match(standalone, /neutral-panel/, "standalone contains the generic sample adapter");
+assert.doesNotMatch(standalone, /agora/i, "private or archived product code must not ship");
 
 const packageJson = JSON.parse(await readFile(resolve(packageRoot, "package.json"), "utf8"));
 assert.equal(packageJson.name, "@luminarylabs/frameulator");
-assert.equal(packageJson.version, "0.2.0");
+assert.equal(packageJson.version, "0.3.0");
 assert.equal(packageJson.publishConfig.access, "public");
 
 const packOutput = execFileSync("npm", ["pack", "--dry-run", "--json"], {
@@ -50,7 +51,7 @@ const packOutput = execFileSync("npm", ["pack", "--dry-run", "--json"], {
 });
 const pack = JSON.parse(packOutput)[0];
 assert.ok(pack.files.some((file) => file.path === "dist/frameulator.standalone.js"));
-assert.ok(pack.files.every((file) => !file.path.includes("node_modules")));
+assert.ok(pack.files.every((file) => !/node_modules|archive|integration/i.test(file.path)));
 assert.ok(pack.files.every((file) => !/\.(?:pem|key|env)$/.test(file.path)));
 
 const site = await readFile(resolve(root, "docs/index.html"), "utf8");

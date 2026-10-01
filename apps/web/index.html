@@ -2,13 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-src 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050708" />
-    <meta name="description" content="Frameulator is a single-screen Agora deployment, OpenXR, and evidence workbench for the simulated Steam Frame contract." />
-    <title>Frameulator · Agora operator workbench</title>
+    <meta name="theme-color" content="#080e13" />
+    <meta name="description" content="Frameulator is an application-neutral simulation workbench for inspecting adapter lifecycle, input, RGBA surfaces and evidence." />
+    <title>Frameulator · Application workbench</title>
   </head>
   <body>
-    <frameulator-lab profile="steam-frame" scenario="normal-session"></frameulator-lab>
+    <frameulator-lab profile="steam-frame"></frameulator-lab>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

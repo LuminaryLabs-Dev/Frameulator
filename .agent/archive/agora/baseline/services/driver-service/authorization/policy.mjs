@@ -1,0 +1,1 @@
+const elevated=new Set(["install","uninstall","start","stop","publishDevice","removeDevice"]);export function authorizeDriverOperation({operation,elevated:ok}){if(!elevated.has(operation))return{allowed:true,elevationRequired:false};return{allowed:!!ok,elevationRequired:true};}

@@ -1,29 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (local development)
 
-- Establish the cross-platform Frameulator monorepo boundary: host-neutral core, runtime service, privileged driver service, platform adapters, Android/SteamOS runtime boundaries, desktop client, SDK, and architecture tests.
-- Add portable-mode runtime contracts so Frameulator can operate without a privileged native driver.
-- Add fail-closed Windows, Linux, and macOS driver adapters. Native device publication remains explicitly unproven.
-- Preserve the 0.2.0 browser laboratory as the lightweight simulation/evidence tier.
+- Generic trusted application-adapter lifecycle, input, snapshots and RGBA presentation
+- Product-neutral browser workbench and bundled neutral panel
+- Preserved Ed25519/SHA-256 verification as independent signed-package gate
+- Schema 3 evidence distinguishes JS execution, host assertions and native proof
+- Exact prior application integration and regressions preserved in a checksummed archive
+- Generic adapter integration verified separately; no private product distribution
 
-## 0.2.0 - 2026-09-04
-
-- Require an approved local Agora Flatpak before application sessions can run.
-- Add streaming SHA-256, signed release-registry verification, and exact capsule verification.
-- Add the Agora browser-capsule Worker path and capsule-driven Three.js validation scene.
-- Record the Flatpak verification and native-execution boundary in every application report.
-- Remove the browser-VM direction and retain a lightweight static-site architecture.
-- Add a disabled-by-default static release configuration so maintainers can activate a signed Agora release without changing application code.
-- Replace the marketing page with a fixed full-viewport operator workbench.
-- Add Agora capsule ABI 2 and the shared MDM Lite deployment, session, project, update, rollback, crash, recovery, and bounded event model.
-- Add keyboard and gamepad workbench navigation plus browser-local panel/report metadata persistence.
-
-## 0.1.0 - 2026-09-04
-
-- Added the deterministic Rust/WebAssembly simulation kernel.
-- Added the JavaScript and TypeScript API, inline Worker mode, external Worker mode, and main-thread fallback.
-- Added the `<frameulator-lab>` Web Component and Three.js validation scene.
-- Added models for the nine Steam Frame-facing service boundaries.
-- Added the static GitHub Pages demonstration site.
-- Added source, package, scenario, and browser release checks.
+Prior history is preserved in the original baseline archive and Git history.

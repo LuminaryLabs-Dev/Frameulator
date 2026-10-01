@@ -1,0 +1,931 @@
+{
+  "schema": "frameulator.archive/1",
+  "sourceRepository": "LuminaryLabs-Dev/Frameulator",
+  "sourceCommit": "d47d9a15e88b06f1fa6fac0b59f22f06e6138151",
+  "files": [
+    {
+      "path": "apps/web/src/site.css",
+      "gitBlob": "9a8fd49d32bc27b9bf282ca778c793202dded935",
+      "sha256": "b13d687422b0d18f7c3ee9a10d07963c035a7a31cedd63ee254e68b5e870e2a3",
+      "size": 422,
+      "mode": "100644"
+    },
+    {
+      "path": "apps/web/index.html",
+      "gitBlob": "c6343b19aaf1ebb0d6a60a8387e224fcce9d3368",
+      "sha256": "0f07e2a0bc931e5c8f34a0575edd861e909ede808dd408354e0da9bb0efc2276",
+      "size": 599,
+      "mode": "100644"
+    },
+    {
+      "path": "core/api/index.mjs",
+      "gitBlob": "af3bb9fea6bf88a4916b3ab805f6624d2168c136",
+      "sha256": "0dd8a3a24067d4cfa92e9a1cbbaded7453eb43501efca6f3fd6615a9ffcd18c6",
+      "size": 448,
+      "mode": "100644"
+    },
+    {
+      "path": "apps/web/package.json",
+      "gitBlob": "22f87343c8446f9c076f11932cee534bfbd6da90",
+      "sha256": "90223820beb55c9a78603959eb5142d8925cdb56764d63d2ee85637baee173ae",
+      "size": 175,
+      "mode": "100644"
+    },
+    {
+      "path": "core/device-model/index.mjs",
+      "gitBlob": "ca0f5fe299b9c4221fd28f7a77bd585b3f2111af",
+      "sha256": "1c61c457d10fe858f090082e0b8ded88263be5e7e200fc7a35ec8c37f9ae8a88",
+      "size": 1197,
+      "mode": "100644"
+    },
+    {
+      "path": "apps/web/vite.config.ts",
+      "gitBlob": "a6af771421b60124bc565dc245b959e9ae6bf1da",
+      "sha256": "20fc9f830e997971e7e6ab27d89e7cbbf4424fd8329d6a2b9ee865c0fa4da304",
+      "size": 486,
+      "mode": "100644"
+    },
+    {
+      "path": "app/desktop/client.mjs",
+      "gitBlob": "f6ef2a9b75215361c56ff427cf07f3ee53ea424e",
+      "sha256": "518ebbf00887fa87d17a0e1063ce7cf07bc50d1dfabcf351f9fbb74d777ef6e6",
+      "size": 480,
+      "mode": "100644"
+    },
+    {
+      "path": "SECURITY.md",
+      "gitBlob": "352baab80ecd652aca937d332fbcd5798c5f410d",
+      "sha256": "1ca967ba8a26ef82d0f011f6619bde9a44f4722f0a90e079556c79b73b4ee281",
+      "size": 707,
+      "mode": "100644"
+    },
+    {
+      "path": "apps/web/public/releases/config.json",
+      "gitBlob": "99f44d3dc261129f4da6e94f565fb979007ed08c",
+      "sha256": "252ad04bd1fbeb7dcdb9353ba75a9894286c04185263ca6f04825d61564e85a8",
+      "size": 101,
+      "mode": "100644"
+    },
+    {
+      "path": ".gitignore",
+      "gitBlob": "077575c29e076f3479d23415a8be17ae3e4bac25",
+      "sha256": "6f3250e01faf3db1afb93f44d0493319c853c7db8cb5b4a11fe0fa14a0397f56",
+      "size": 167,
+      "mode": "100644"
+    },
+    {
+      "path": "apps/web/src/main.ts",
+      "gitBlob": "1dfecfa2610ca914e4faa48a1f3b6ec05adfb462",
+      "sha256": "9e87ef2bbbe2b3e8c70037294e9904924934650136879b8fb501ceca9de10dd4",
+      "size": 1355,
+      "mode": "100644"
+    },
+    {
+      "path": "core/android/index.mjs",
+      "gitBlob": "4d71fa4ec1b8413de28f517cf45ad58636894a03",
+      "sha256": "13a0afd6a432a4f7b2776f248d7ec9bbfb6c14b66a732d1831f676d54036e8e0",
+      "size": 704,
+      "mode": "100644"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "gitBlob": "b8669312aa988cc5301bb3c22c4568b56e82caf1",
+      "sha256": "53b5b1a5828fe5035245f3662acc3dc989db3249451d2e0e335ce4d6edf91b37",
+      "size": 1938,
+      "mode": "100644"
+    },
+    {
+      "path": ".github/workflows/build-and-deploy.yml",
+      "gitBlob": "b3ecb748c148f15c8a8b2624a67e60b3e589f21e",
+      "sha256": "0047b55e2726e6a5d7233ce81062a79c41511313a4de64c6c948eac2ce6cbf56",
+      "size": 1603,
+      "mode": "100644"
+    },
+    {
+      "path": "README.md",
+      "gitBlob": "7f401be465304f75d55ca399c1551afbda7d6659",
+      "sha256": "73202e7cca1e138c644174b6a7d924f93671f2b4b9fb666820488a45f9c3a800",
+      "size": 8931,
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "536ede36660537463c021da87a105b52d93589d7",
+      "sha256": "782042ff0321be172e07c8d9c9188f9e9eb9eccbdf8261002c9318376901a257",
+      "size": 1071,
+      "mode": "100644"
+    },
+    {
+      "path": "docs-source/monorepo-architecture.md",
+      "gitBlob": "80039df7c7c0d88c60af2e26bb6bf5ad3a850c7e",
+      "sha256": "43f8dc2478034d9a74ca50bf3eeba0b1d9ab406fd19bcb1f7922ad2f6d28bbee",
+      "size": 1591,
+      "mode": "100644"
+    },
+    {
+      "path": "package.json",
+      "gitBlob": "58a0f558dae684fc9119f899b5577f2269f62986",
+      "sha256": "9b10885e85f0277ccaf6cb620ed10403dc76339497941fc63f81030954e06388",
+      "size": 1361,
+      "mode": "100644"
+    },
+    {
+      "path": "drivers/linux/usb-gadget/index.mjs",
+      "gitBlob": "10078472eb92e518b706ba6caaeddb358fff48ac",
+      "sha256": "91decb6895b51cb8284819607075478a92ca916f2540a9f467f7ff752745ee8e",
+      "size": 1001,
+      "mode": "100644"
+    },
+    {
+      "path": "core/steamos/index.mjs",
+      "gitBlob": "ca1f37e15bb951d8f19b33f81337929a07716123",
+      "sha256": "8ed26179eb28fff11a50d1db3ae9dce2be71ab4f92367da58e9f5bbd86d9e2b1",
+      "size": 399,
+      "mode": "100644"
+    },
+    {
+      "path": "docs-source/driver-contract.md",
+      "gitBlob": "3ef03b9e6d3546ead28748803285fbbb4135d486",
+      "sha256": "d458421f8d2db5ad6983db1ccc8352ac95ebbc457b4566cb6346e8d5dc3a6f8b",
+      "size": 608,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/index.html",
+      "gitBlob": "997ceb0d33b906a8221b28e673a58922e1f9d215",
+      "sha256": "62e4051da8efb74b5cc94e7ebc1b4b4f7f069448045b3f9ace1f6e6169d86f85",
+      "size": 722,
+      "mode": "100644"
+    },
+    {
+      "path": "drivers/macos/driverkit/index.mjs",
+      "gitBlob": "001aa6a6c7173c987ad43607bfaef76102c38a13",
+      "sha256": "632777a5d9494bebf6208b92fa3f74f6dbbc7788bad88325ffdc2eedc201b4bf",
+      "size": 1020,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/config.json",
+      "gitBlob": "99f44d3dc261129f4da6e94f565fb979007ed08c",
+      "sha256": "252ad04bd1fbeb7dcdb9353ba75a9894286c04185263ca6f04825d61564e85a8",
+      "size": 101,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/.nojekyll",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "mode": "100644"
+    },
+    {
+      "path": "package-lock.json",
+      "gitBlob": "8c5fbdab06e25845337b8a79c6e53a846d0bf02e",
+      "sha256": "e53e627eecc4998dd0c0d2f1777502e9266a5efd9580be8fa311ff130575ca2f",
+      "size": 39231,
+      "mode": "100644"
+    },
+    {
+      "path": "drivers/windows/virtual-usb/index.mjs",
+      "gitBlob": "6438d168b589be8ea89fa3b3a8548f5b1cb3f13f",
+      "sha256": "7a1fa1da9e64c65cc81f408f0d786a21c6084644573e33395d83d9dba6b7ff1b",
+      "size": 1015,
+      "mode": "100644"
+    },
+    {
+      "path": "docs-source/architecture.md",
+      "gitBlob": "0ad3251c16209d5a20833846392a0e88fd46a8d9",
+      "sha256": "2699199c576c49a6b37bce1de6b176104f041745a31a4b809a4d45996a7cbbd1",
+      "size": 2311,
+      "mode": "100644"
+    },
+    {
+      "path": "core/protocols/index.mjs",
+      "gitBlob": "b795b062fc2fcab38939eb6b42683bc86b4a941a",
+      "sha256": "f304df9e40fec19cd322606ba5ac27f6d2dc35b0ca73553dd8124454145bda37",
+      "size": 829,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/assets/index-t8htvbI1.js",
+      "gitBlob": "3d4863cfefd6c7204740bac1f16fc936f6fa84cc",
+      "sha256": "fe753d414391d043f89a249f97bf8dec5df64eec5d78b26a1f04adc1ee3872a0",
+      "size": 581490,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/assets/index-BwRA5qv0.css",
+      "gitBlob": "4c9677b51089b19001bf2f2f0a07caec1e65870c",
+      "sha256": "62f25fa5dbd7d9e3aa37efc53283feb3ef20566b13e048de00ba8a18b7893e91",
+      "size": 353,
+      "mode": "100644"
+    },
+    {
+      "path": "core/xr/index.mjs",
+      "gitBlob": "3caf6ffc55242e14187230c7346ccf245009d8ae",
+      "sha256": "02abca97ac0733e4c5ee80331987443fc9debb7b4fae30a283304b50460b9e95",
+      "size": 698,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/LICENSE",
+      "gitBlob": "536ede36660537463c021da87a105b52d93589d7",
+      "sha256": "782042ff0321be172e07c8d9c9188f9e9eb9eccbdf8261002c9318376901a257",
+      "size": 1071,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/application/ReleaseRegistry.d.ts",
+      "gitBlob": "37c1806d3364c6a2bbb8038014928d02a162616a",
+      "sha256": "af69b76ee8e81528ce6b0fc901624c4675a8eef2e099fe9ae467b0528499bc10",
+      "size": 433,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/Frameulator.d.ts",
+      "gitBlob": "c84f9c6099d8610f2df6522eb4f1496e3c4902a8",
+      "sha256": "107aea4006688cb61d453ba99ebfb65f01b0c11a304b200995033f0b7ee43f72",
+      "size": 2697,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/element/frameulator-element.d.ts",
+      "gitBlob": "9bfac4cea99ec79808d3c8006a3672446f0c1e3e",
+      "sha256": "2178812060a744646d5c23a20a4e3cfcb776002b3848bdc07c7b62ae5e8e5881",
+      "size": 1408,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.worker.js",
+      "gitBlob": "3b8aa3e2fea1adad72e50d5e42d1046bf6536a69",
+      "sha256": "fb9f928569db018a70f2c1e4888503124adbf62b9f6e5b109e33f277e7d84ca2",
+      "size": 15167,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/WorkerClient.d.ts",
+      "gitBlob": "e1ba9308ee6199444249115c0f07607f1449f5e3",
+      "sha256": "af126ff7daa9ee91de76d5cffab9c7087547f3ce2011dd70f5011134ce91e5e4",
+      "size": 419,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/FrameulatorKernel.d.ts",
+      "gitBlob": "7acb09e6ffecaf3167e6cc265579c81b83bf9fd2",
+      "sha256": "386eda863f68d3437e588262685f29148ad2f1676958ea8f81e0aa0d287eeb1b",
+      "size": 1208,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.wasm",
+      "gitBlob": "146bb55b8f58e31216f92498ad2dc1e76718307c",
+      "sha256": "e168287d74b539ed9f2f8615275584d7ac0dccbd0837a003a2324e34068e4a1e",
+      "size": 760,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.js",
+      "gitBlob": "aa1b8cca4a94bad4a3755f74eba756d66f6ac1d1",
+      "sha256": "eb9fc8514bfd8279128f8884358026cc35412cc95bd41c4cec35399492a916a4",
+      "size": 125805,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/application/hash.d.ts",
+      "gitBlob": "b36b547d51992b59784d1bd84de8f2f8b45c636d",
+      "sha256": "6c5174c3b5f65bc1da3dbfbe056d2b84b13d5f924d103f260f6a1e22b9d9450d",
+      "size": 495,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.standalone.js",
+      "gitBlob": "119fa19c94ebec595130ad7ce0177173892535b5",
+      "sha256": "07d887a8f62ae83b89504694c42e9ead05010431f7866d8032857b87acc7030b",
+      "size": 595068,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.js.map",
+      "gitBlob": "d85943c700326854c81e2145be5ae19b080ffdb0",
+      "sha256": "8d654315940be7316cb895839523dbb56c518d411a3cecba930ff7e4089718de",
+      "size": 189719,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/application/ApplicationGate.d.ts",
+      "gitBlob": "c662ae057060e754847e39eb0bc32344d7902da5",
+      "sha256": "c0986a186f2f3ad2351efd9d96d8778c713f96e8c7834bc9793a8d772dee97d0",
+      "size": 876,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/application/BrowserCapsule.d.ts",
+      "gitBlob": "b8904db5e6db93f2e1a164d17e97c7e493bd2787",
+      "sha256": "1497ec0c36ebab1c6359a5915398bc0993d10de1fdb74042ceeca33ba901dc97",
+      "size": 1668,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/frameulator.css",
+      "gitBlob": "bc6c00778db325c2d3f3df14dcfa6548440aeda3",
+      "sha256": "a7816268e60f3c08dec558604cb9165db446a9c4d441552166c07dd089ff40a1",
+      "size": 13775,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/README.md",
+      "gitBlob": "49c8acc825f5bcaeb80251253174efc1e6a0a1af",
+      "sha256": "339ec82c19fd96e72ebf14e9f47efff4f1428d77b88f91310b8e96595713be78",
+      "size": 1575,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/profile.d.ts",
+      "gitBlob": "27da0e8de85b965c1bdc3e2a24153c80223b2fb5",
+      "sha256": "1eca34014a236a85f5e4298539aeb01233f91bede7e54942a27965acbdb1827a",
+      "size": 228,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/rust/Cargo.lock",
+      "gitBlob": "82d960f2b93625a92979b24ab231a8ca377a4599",
+      "sha256": "a74a229e066c62bbc6c5cb48efaeff1f874245f5b6aad4bcbaed1d59405c3979",
+      "size": 163,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/rust/src/lib.rs",
+      "gitBlob": "c848a88ad8731f951ef074388a4c2f010c6e51c0",
+      "sha256": "da7014b78c65e759736bc39a4efdd6cc37843203e076f777e9ee328bf42f29d3",
+      "size": 2067,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/standalone.d.ts",
+      "gitBlob": "6d1e0ee83e7d50615ce85da58cd1bf4683ed0d03",
+      "sha256": "78770540a44fbb91253c88273e0d5431d223ada7322d5beb2e4d6c296851c493",
+      "size": 25,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/package.json",
+      "gitBlob": "5323ca8ddf89ce3b70fa58b7e85d0791c4401898",
+      "sha256": "aa5ae09e4714dacffe023297301248e8c1ab2ba1e80ed23fcf920f1cfd592b0d",
+      "size": 1460,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/profiles/steam-frame.json",
+      "gitBlob": "898d80475dccbd1f3d3a8ee1679fa8004b749f4a",
+      "sha256": "9b65e3a19b0ab6e1da4976d871d233921fd98e37877dd3aa6067c9e44e65800e",
+      "size": 735,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/storage/WorkspaceStore.d.ts",
+      "gitBlob": "8ad789bbea55aea388f0f5bfa21c6ff152550ee0",
+      "sha256": "c86e5d53557dd58f216294b27e7f31db9995a89af4052fb2ee99589aaa1c0c21",
+      "size": 429,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/worker/entry.d.ts",
+      "gitBlob": "cb0ff5c3b541f646105198ee23ac0fc3d805023e",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "size": 11,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/wasm.d.ts",
+      "gitBlob": "47ba899990e7b0e219f40cc568c60a8754a4f044",
+      "sha256": "8dbec1a773d2ad5c140f2ccae5d405b1734e4bf9a054ee407a8918897b838aa2",
+      "size": 639,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/renderer/FrameulatorRenderer.d.ts",
+      "gitBlob": "dc4456c0fd6fb519dedf6ec15ce8040600ec9650",
+      "sha256": "c5a22b32eea5db00008c4dfbde5c106ac9cf5d2ce7880b73c97ee0e3f181f5a1",
+      "size": 1232,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/index.d.ts",
+      "gitBlob": "6ee6dfee15f029713e3a176d7d745e3d8e633979",
+      "sha256": "fd1efd461988a1de03aec47727f98862071996a316b94b42ccf2c0c50e0c124b",
+      "size": 1085,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/rust/Cargo.toml",
+      "gitBlob": "6e653fee387dd9879f622e23ced32a300a2de114",
+      "sha256": "4805ba56778b4079bb8d05e57bc618750a29c9020c403f5e5e82c5bdbd1aaa0d",
+      "size": 230,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/scenario.d.ts",
+      "gitBlob": "ce8dfbe3813656b98a1c5832bbc113cb17a96fc6",
+      "sha256": "75448bcec37ce9e16867d5f3e3feacf16a36685386d476aab48de0edb0f7b834",
+      "size": 296,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/storage/IndexedDbStore.d.ts",
+      "gitBlob": "66d3fe8bad78cc13b20da6b60d4da92fb8c41393",
+      "sha256": "c7e9358eb0eb7b57853ae603241ce754924be8c35881b93c2313953d3677835f",
+      "size": 1192,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/services.d.ts",
+      "gitBlob": "393381021990bce4b9b7bc1e7c0a73b2e05bf7ec",
+      "sha256": "8db6fabd2b604ecf63b3b15b1d073e8571da80964555754a4f7ee7ea83f15dcd",
+      "size": 624,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/dist/types.d.ts",
+      "gitBlob": "f997020226e8ec2b37b26fdfc8ddb29b9b727714",
+      "sha256": "690338d0841e317b1e1554f44bf4a2f5a4a9e75f24b61a2cf3d4780320ec4f62",
+      "size": 7016,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/index.ts",
+      "gitBlob": "d2e0ae120055ebbadcbf566dfb569cd7a31f9140",
+      "sha256": "51b9f7ca4fe1e2d50b9c11709d8893f7a788270e88ca9a70c27d6bee3ac8e294",
+      "size": 1149,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/globals.d.ts",
+      "gitBlob": "934b838a920e1eecfe16c8a732b059557e98e57b",
+      "sha256": "88bbfd0e8a9cf4a395c7115eb8ce89edbf597a36c666e461c78667e1fa3f377f",
+      "size": 105,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/scenarios/default-scenarios.json",
+      "gitBlob": "f183e9a6e22b6434c39472012e477cabe7c99c3f",
+      "sha256": "fb5360ca06e3e9f4b52bb9e318ad24e5545170eea8d254a8af9522e47664a8a5",
+      "size": 838,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/profile.ts",
+      "gitBlob": "281e9d215338f70cfb253b8b323958586e25c166",
+      "sha256": "79997bb53aaf0067a1b0f932f85cda8308a36451ec88916ed432f1118432dc13",
+      "size": 1113,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/FrameulatorKernel.ts",
+      "gitBlob": "7efc48f654a4460e668e86567d0e916fa89ff58b",
+      "sha256": "61974d414d7ee86400e76320d9178af9824c33c0d834e7bdf2831696a93af5fe",
+      "size": 5202,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/application/ApplicationGate.ts",
+      "gitBlob": "be1dece98d2ca27e1372c41eb0643f48715c7eb5",
+      "sha256": "88a3271f634dfb71ca9d5ce6895d18ca9aac2f788c62120b396367a3d75da007",
+      "size": 4120,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/application/BrowserCapsule.ts",
+      "gitBlob": "573fc1a9840bc1580261230ec5439c4803579453",
+      "sha256": "fc8194d16c4b12c9e86942dca38e5e0bf2ab33b2a642c3bd6a3ec4d4c9225dab",
+      "size": 11264,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/WorkerClient.ts",
+      "gitBlob": "54e0a263ffa78df75c063fe1f462e287d78fc9cc",
+      "sha256": "771d8d4488511d504b87f71166b3c15c7d35e8dd880b5184aea521ed9018f434",
+      "size": 3336,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/assets.d.ts",
+      "gitBlob": "88c59b8022e5235ae7f0121966ac54e1b77f0601",
+      "sha256": "37ff6500dd8449e1ea63ce3e8c016271c61bdceec838ae1564a659834c73dacf",
+      "size": 81,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/application/hash.ts",
+      "gitBlob": "407e344ef5e37c6d67339a665eacdf843703bcbf",
+      "sha256": "0c59cbdf63446717a3b43377cf0dd187746b17eb780b7e3ae979cab21bbc0a13",
+      "size": 5058,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/scenario.ts",
+      "gitBlob": "cc2dbd5e81e670d77f656c55b84f436ef335c2e5",
+      "sha256": "9416125875d738ff3afd2697646eaa78c825f88ef5fb6de3701b6655d7bad17f",
+      "size": 1505,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/services.ts",
+      "gitBlob": "f65caf08bed5cf3ab767bbe59e97ebf558c84451",
+      "sha256": "8cd7a41f874c21c4ebe4ba0a0c53aa4e8b4735d6fb14f293d90cae8632a78f7b",
+      "size": 3169,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/renderer/FrameulatorRenderer.ts",
+      "gitBlob": "9f35b58fde9f741566ad97ef4e7a13266ae105cf",
+      "sha256": "03ebb28e84bd4ae56877919fb1b6f8902498daff63b50570d4dbeabc7e987aa2",
+      "size": 9100,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/Frameulator.ts",
+      "gitBlob": "8cda0fca74fc6779c3a92d21d781fc1afe9a9465",
+      "sha256": "9330760eba88f6d0ced25b5392835e307f9508a0dd66331a64a06ae2019b8c4b",
+      "size": 20841,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/application/ReleaseRegistry.ts",
+      "gitBlob": "1fc5247d0ed85d43bead38d0d42191635292ef32",
+      "sha256": "ed812aa26cc6a5efac51dc10037e772e8dcd76f28fe0ae0ad50b6ded37f18b73",
+      "size": 4799,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/element/frameulator-element.ts",
+      "gitBlob": "9e16787b80660443541ccbd32dddd22f354cfc24",
+      "sha256": "0d53508467ae21fd0b6edab648b2cc7ea2e80b6dddc39e1fd13a22e7d5e30ee3",
+      "size": 34092,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tests/kernel.test.mjs",
+      "gitBlob": "4a0726aa496be5f2f217147ab436d828fa33f371",
+      "sha256": "955a1a792e791bf8a950d9b8a8f960264690dc7ee57faa8fb296e486ccc5d710",
+      "size": 3657,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/types.ts",
+      "gitBlob": "626c7e41ec8c9bda4406379aa4e4617adca9070f",
+      "sha256": "aefa587894031a9c3e8b395f234b32bde79fc47344a4ac63f6115d73b7f42408",
+      "size": 6775,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tsconfig.build.json",
+      "gitBlob": "48f283a828086d1c06fae0764855d1a385bc29e3",
+      "sha256": "0f6fccbe2ff9ff4cd7ae7da0edccc962f874f1b430fe7daf08eb8986827891f1",
+      "size": 199,
+      "mode": "100644"
+    },
+    {
+      "path": "runtimes/steamos/index.mjs",
+      "gitBlob": "7ad3c3ac495ae5179eb70c48c61b5450f9580109",
+      "sha256": "fa7be082d583922e1e37718d00a4bcbc28df5a96509384f51aa617725a71dd03",
+      "size": 500,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/styles.css",
+      "gitBlob": "bc6c00778db325c2d3f3df14dcfa6548440aeda3",
+      "sha256": "a7816268e60f3c08dec558604cb9165db446a9c4d441552166c07dd089ff40a1",
+      "size": 13775,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/standalone.ts",
+      "gitBlob": "921e9292a741afd26b30dc52a16763bbb9135eb7",
+      "sha256": "3a28b1990c1cc3fc07c13d3475269475736b5a776b25e61ef89464c57b59e1b5",
+      "size": 26,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tests/workbench-contract.test.mjs",
+      "gitBlob": "cbc54e8beac3d8f6d8f92b672c5c42182e6992b4",
+      "sha256": "e9c78c2557564eed3156bb4cfeda4fe25b7605d063583bc2301f40fb81febd25",
+      "size": 1594,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/worker/entry.ts",
+      "gitBlob": "6c33c5b014e46600f11fa2dcb1a215589ffd773f",
+      "sha256": "49541422c7ec164389d9d1d2f9d0d480f3abf4f25fe0983be3585d2897771d23",
+      "size": 3745,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/wasm.ts",
+      "gitBlob": "803142b3fe06a52b3073e7c44ff3b891de2e548a",
+      "sha256": "036a0fffd4c76fc389b31728506faa5d9e9d62b7c5426ebbbde44ab8a423d619",
+      "size": 2337,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tests/application.test.mjs",
+      "gitBlob": "e718b87ff7e4292777182b1a0a1944abfc85f9a1",
+      "sha256": "130486d9599bd5243df45efd42d8305fa38e1656c2a619d3d7807da577997b42",
+      "size": 8939,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tests/package.test.mjs",
+      "gitBlob": "1cc56056338ad2674e0f45d4f383a8a1e177c481",
+      "sha256": "81d70941a68c699b022edf7b2894695c2820b234e89861639fdc8b86e8254274",
+      "size": 876,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/tests/fixtures/agora-test-capsule.rs",
+      "gitBlob": "a289443c7ae699908e952d9bfe5bac0bede34136",
+      "sha256": "7bdbd5387f0b5f45bb366f3b7db27f30c88f4bbbfb21b994c951cf36302e0a05",
+      "size": 5858,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/wasm/frameulator.wasm",
+      "gitBlob": "146bb55b8f58e31216f92498ad2dc1e76718307c",
+      "sha256": "e168287d74b539ed9f2f8615275584d7ac0dccbd0837a003a2324e34068e4a1e",
+      "size": 760,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/storage/IndexedDbStore.ts",
+      "gitBlob": "66e2422daaf800bee64e1d0cd4cd7d8af6cab656",
+      "sha256": "d6c38ec504f60ef574e13e62add0b958c4366bd33d9b86d04191595a631a24ca",
+      "size": 3248,
+      "mode": "100644"
+    },
+    {
+      "path": "packages/frameulator/src/storage/WorkspaceStore.ts",
+      "gitBlob": "23cb5038e04692fe976612993374eb7c8a7c1906",
+      "sha256": "cd358183a496f88b0b669bc8e63901ef570032e7914146d039f0e4ace0d8cb18",
+      "size": 1321,
+      "mode": "100644"
+    },
+    {
+      "path": "runtimes/android/index.mjs",
+      "gitBlob": "ad73035b0341fe908c17148ff555b78c217ec610",
+      "sha256": "4e17006f90769ca231e9113647ee072ab7cac6eaaf47369a07bb8453a6fea83a",
+      "size": 687,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/build-package.mjs",
+      "gitBlob": "6418636b122c6fb333cdeb78b1c9e0ce64f83ea5",
+      "sha256": "6618582542924838bdb3d142f3128f86ec1e54a71f0739462d3deafd3f0fb0d0",
+      "size": 2290,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/site-release-config.schema.json",
+      "gitBlob": "dfaaa23e81a48dcf98a127ed96337602424ea688",
+      "sha256": "ea1467217bf63813994b16638ebefa770adc69aa012dc8869a39c7dd81d04d8e",
+      "size": 1232,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/protocol.schema.json",
+      "gitBlob": "e34351b616e7ab8b263e5d63a27f74f5e0402648",
+      "sha256": "3befa2dea46a9050ecde687784f3cfc83d6e79be903c038e2aeb4960a739986f",
+      "size": 922,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/profile.schema.json",
+      "gitBlob": "11f88a312e8eb043adcb9538c12a98a44391577a",
+      "sha256": "50a25823263effe46e1355490f21fd770c93059e33e6446a2be2f41886e50dd4",
+      "size": 1025,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/management-report.schema.json",
+      "gitBlob": "fa5bbebde558db0338a1c650f540ef5d16e8c3c1",
+      "sha256": "3f68307f6761f0e39e40ad48614e219fc43002a33dacafa02c37eecc5a97b615",
+      "size": 572,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/device.schema.json",
+      "gitBlob": "778f4a0ff07bcc3cf26608ae10a0ea5f99f769ca",
+      "sha256": "1925e628c86d3bdcba719820b2e8f356f10a75e2074f82bcef0e04e8627b9554",
+      "size": 287,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/build-wasm.mjs",
+      "gitBlob": "c949428536f850c35e19ffe2c0e00f054d1b0d11",
+      "sha256": "9c824503c76be4b67653d7e7094f2800df6ee949eb5a57c0f0b2d94eb5afa612",
+      "size": 1218,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/release-registry.schema.json",
+      "gitBlob": "8b72fdfeae0797ba5f8ce79379d578d8227f079a",
+      "sha256": "df0d9430ae6a7c82030dd8c34bcd19d1fd8c8c63fa7fb6d01c9f72104f65f3be",
+      "size": 1790,
+      "mode": "100644"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "gitBlob": "d8a8edf606aa8b546f8aaabe9194466510270f78",
+      "sha256": "4ec57ad9e0881c3520e09b40568fe20f33182132cbde1a730dd997efb3eaffae",
+      "size": 89,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/clean.mjs",
+      "gitBlob": "5d5d2932093bf398c51a8e596688ddd56be9ff5c",
+      "sha256": "5d1c7c150cccfa0ae579e718ad8067400e4a541b46bc7cbb3151a554fb1f16e9",
+      "size": 294,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/management-state.schema.json",
+      "gitBlob": "04dbc0d4af4763fff31a3755ffe7f988127da70f",
+      "sha256": "451817c5014bf6550e0ab89d7da9da894808a6667625626fde179096c6dd2258",
+      "size": 1640,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/serve-docs.mjs",
+      "gitBlob": "925c12c587a89232d6ed421f355f58d6a9006a23",
+      "sha256": "1adacd88eddb5a197a7a8723a3b9bcdb8676985c6ecd914d67b5fb181be2ef71",
+      "size": 1072,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/verify-release.mjs",
+      "gitBlob": "89b136e4a5f0dfc126e21868ced8509d46fb6320",
+      "sha256": "3559b1eefcfa7dc098589e436df2dc6e5a324c6e95d58e17f624f076e4c2f38b",
+      "size": 3759,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/report.schema.json",
+      "gitBlob": "9d43f131a7c2e8fb2e66315077322bab0430c93b",
+      "sha256": "fa72ddbaf183845d0cb6b0bd90e65818a979d94e2620c0ff1784eb4eff348c3d",
+      "size": 2878,
+      "mode": "100644"
+    },
+    {
+      "path": "schemas/runtime.schema.json",
+      "gitBlob": "bcc045c42ebbcc4e4f4038424d335bf88e24dbca",
+      "sha256": "ad453b457ca7e553ed920d7792c1a0e44d1f6a4059bcdd80708dc172bda49e5f",
+      "size": 288,
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/verify-monorepo.mjs",
+      "gitBlob": "22737382e7ca40728a676c411ead2d7483ed9038",
+      "sha256": "2fc0ee02f5c193528e2bbb8e8e7de67d824bdedff882cfcf722282330b5628ec",
+      "size": 1092,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/adb/index.mjs",
+      "gitBlob": "720b868102dd06f4b83fca83fbce196c7c5b15bf",
+      "sha256": "2a8db051e912ffc34f7fc0566a6cf18f8cb875017d65ef7ccfff386403d690bd",
+      "size": 202,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/devkit/index.mjs",
+      "gitBlob": "84ca0f398898c9a7342ccecb17721dcaccfcafe1",
+      "sha256": "790149d450c4f948c3da019ffaede2bc7b5fc3a2ff575d33f04fca76561654b0",
+      "size": 139,
+      "mode": "100644"
+    },
+    {
+      "path": "services/driver-service/ipc/index.mjs",
+      "gitBlob": "dabd7ca23ef56fd85310d77107fef65df64d0bdf",
+      "sha256": "7d09d0c6d9bff8980c67c4750a0fd1e6bfceddb078735b11ab46251bc94d95fd",
+      "size": 260,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/ssh/index.mjs",
+      "gitBlob": "8c1761b53ecb72cb9da0c26c7460c651c5917648",
+      "sha256": "0b8bdfd0d1d9fb05e6c43ebbc7907d15996c77537a0686eb5ff5593181e93add",
+      "size": 170,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/frameulatord/index.mjs",
+      "gitBlob": "728806061b896402adfba8fa267c92e1711de5b0",
+      "sha256": "74998e1693facc0ea40b0d41615b7b61110baf3b4786daf54f41e28e575968ab",
+      "size": 2637,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/core/device-model.test.mjs",
+      "gitBlob": "b19995a9e838742ed28a0c48187c9145fab629c5",
+      "sha256": "1890340f48d7a4340eb50872650f5927b5b80f32bd82d75ce2b81cb5b41dd4f8",
+      "size": 392,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/ipc/index.mjs",
+      "gitBlob": "3d26f8582e866aca78ac8e00f432d08b6c9d525c",
+      "sha256": "ec3418ca21b6a3a41f5382b6a3615c095d84a1dd5095ec203126953b3e53a3aa",
+      "size": 324,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/acceptance/architecture.test.mjs",
+      "gitBlob": "46f20b9db0cd11cbd632bab6a31e465740ba1cf8",
+      "sha256": "37cb3740286c3bb7fe65ff1acb4fd1689b2a6caa14718ea31b3aa88619261f2b",
+      "size": 595,
+      "mode": "100644"
+    },
+    {
+      "path": "services/driver-service/lifecycle/index.mjs",
+      "gitBlob": "d57124974523ea7ea021afb2dd953ff8d86b773d",
+      "sha256": "3b1c251d32a98966c718090e8ee4ad5fbaea4ebbc66f37b94421fdb5bb570e7f",
+      "size": 479,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/package-runtime/index.mjs",
+      "gitBlob": "e444708603e67696b9f145d6d1a8ad73937aa6ae",
+      "sha256": "764414d889427689b20d5ea5c3742a637ef32f66296520c87cd99fe6b810f7ac",
+      "size": 162,
+      "mode": "100644"
+    },
+    {
+      "path": "sdk/index.mjs",
+      "gitBlob": "58ba57ca7abc2958519f1e0e1cb21f3c717b1cbd",
+      "sha256": "a4d70b682d30ad06d6a5f1db684a0524af64f74691e453f0d73e5b2f0a631ee3",
+      "size": 485,
+      "mode": "100644"
+    },
+    {
+      "path": "services/driver-service/protocol/index.mjs",
+      "gitBlob": "914694abd0f257148599747451fd69a8e998ba56",
+      "sha256": "59f31ae585cc7f0a4aac2b5c30e863e11231f9d21495bc40eede22e124d31ead",
+      "size": 474,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/telemetry/index.mjs",
+      "gitBlob": "c1cebf7b55e931cb5f41770bf8adce8a971892db",
+      "sha256": "88dfa3c964f6f6805454528b83e4e1b6217852833fcd761bf199d74810c5cb7c",
+      "size": 379,
+      "mode": "100644"
+    },
+    {
+      "path": "services/runtime/sessions/index.mjs",
+      "gitBlob": "494eec706a62effd17e4c5ab3de01590f13c2bde",
+      "sha256": "e1ea635207c18ac467ccf6690dfd3b0b7d47b121232aeb3a2650ce9ad055b924",
+      "size": 541,
+      "mode": "100644"
+    },
+    {
+      "path": "services/driver-service/authorization/policy.mjs",
+      "gitBlob": "5a81e828854feba7bd1d7b17b09001803cb05509",
+      "sha256": "3b6c1540e3135e241fdcebc093bc04b26130468ef9ee4ddb76778b38315a9fd1",
+      "size": 279,
+      "mode": "100644"
+    },
+    {
+      "path": "services/driver-service/daemon/index.mjs",
+      "gitBlob": "db3d3ae3417f7bfc940f1a2404ea1773d1b072fc",
+      "sha256": "222eb9e658a0efe575bfed4f92f76459d599014e2bacbd222b1eb7ebeeb739e4",
+      "size": 740,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/services/runtime.test.mjs",
+      "gitBlob": "98ccbebc1b6a4b0b9a2a2898d9892dbaf316847d",
+      "sha256": "bb5cdd1966d51ac9c49cf020452725be70189ea1f30874f1b94134dc732dbe1d",
+      "size": 440,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/integration/desktop-runtime.test.mjs",
+      "gitBlob": "043a2830f6aa20ca3732017c609fc5f3fb0603f2",
+      "sha256": "e494e104267dab2ee50d362005560992991f883b3640e6ad47940de987370656",
+      "size": 545,
+      "mode": "100644"
+    },
+    {
+      "path": "tsconfig.json",
+      "gitBlob": "594781e17ccbbcbf3b35a349a5237e1d1d304a31",
+      "sha256": "ff5eb216717f545d45cb3dea6fcec822ad8646396ef44b6ee18c279a10159a8b",
+      "size": 257,
+      "mode": "100644"
+    },
+    {
+      "path": "tests/services/driver-service.test.mjs",
+      "gitBlob": "a49f6713349838650a520ae689daf419c77241e3",
+      "sha256": "6cb1f15cadefc2718bc2e0a0316cb75a89bc0c26791d1aac9e11e9abd195c184",
+      "size": 636,
+      "mode": "100644"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"frameulator.runtime/1","type":"object","required":["protocol","operation"],"properties":{"protocol":{"const":"frameulator.runtime/1"},"operation":{"type":"string"},"payload":{"type":"object"}},"additionalProperties":false}

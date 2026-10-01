@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "normal-session",
+      "label": "Normal OpenXR session",
+      "steps": [
+        { "action": "start" },
+        { "action": "step", "milliseconds": 13.888 },
+        { "action": "step", "milliseconds": 13.888 },
+        { "action": "step", "milliseconds": 13.888 },
+        { "action": "assert-state", "state": "FOCUSED" }
+      ]
+    },
+    {
+      "id": "tracking-recovery",
+      "label": "Tracking loss and recovery",
+      "steps": [
+        { "action": "start" },
+        { "action": "step", "milliseconds": 13.888 },
+        { "action": "event", "event": "tracking-lost" },
+        { "action": "assert-state", "state": "LOSS_PENDING" },
+        { "action": "event", "event": "tracking-restored" },
+        { "action": "assert-state", "state": "FOCUSED" }
+      ]
+    }
+  ]
+}
+

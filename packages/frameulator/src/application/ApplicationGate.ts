@@ -1,92 +1,147 @@
-import { sha256Blob, sha256Bytes } from "./hash";
-import type { AgoraRelease, ApplicationState, FlatpakInput, FlatpakVerification } from "../types";
+import { IncrementalSha256, sha256Bytes } from "./hash";
+import { readBoundedResponse, requireVerifiedReleases, resolveReleaseUrl, type ReleaseDescriptor, type VerifiedReleases } from "./ReleaseRegistry";
+
+export type ApplicationGateState = "EMPTY" | "HASHING" | "LOADING_ARTIFACT" | "READY" | "REJECTED";
+export type PackageInput = Blob & { name?: string };
+export type PackageVerification = {
+  accepted: true;
+  fileName: string;
+  size: number;
+  packageSha256: string;
+  release: Readonly<ReleaseDescriptor>;
+} | {
+  accepted: false;
+  fileName: string;
+  size: number;
+  packageSha256: string;
+  reason: string;
+};
 
 export interface ApplicationGateOptions {
-  releases: AgoraRelease[];
+  /** Use the exact list returned by verifyReleaseRegistry or loadReleaseRegistry. */
+  releases: VerifiedReleases;
   registryBaseUrl?: URL;
   maximumBytes: number;
-  onState(state: ApplicationState, detail: string, progress?: number): void;
+  maximumArtifactBytes?: number;
+  onState?(state: ApplicationGateState, detail: string, progress?: number): void;
 }
 
+/** Verifies signed byte identity only. This gate never instantiates or executes an artifact. */
 export class ApplicationGate {
-  private currentState: ApplicationState = "EMPTY";
-  private selected?: FlatpakVerification;
+  private currentState: ApplicationGateState = "EMPTY";
+  private selected?: PackageVerification;
+  private readonly releases: VerifiedReleases;
+  private readonly maximumBytes: number;
+  private readonly maximumArtifactBytes: number;
+  private readonly registryBaseUrl?: URL;
+  private readonly onState?: ApplicationGateOptions["onState"];
+  private attempt = 0;
+  private controller?: AbortController;
 
-  constructor(private readonly options: ApplicationGateOptions) {}
-
-  get state(): ApplicationState { return this.currentState; }
-  get verification(): FlatpakVerification | undefined { return this.selected ? structuredClone(this.selected) : undefined; }
-
-  async verify(input: FlatpakInput): Promise<{ verification: FlatpakVerification; capsuleBytes: Uint8Array }> {
-    const name = input.name ?? "";
-    if (!name.toLowerCase().endsWith(".flatpak")) return this.reject("Select a .flatpak bundle.", "", name, input.size);
-    if (input.size <= 0) return this.reject("The selected Flatpak is empty.", "", name, input.size);
-    if (input.size > this.options.maximumBytes) {
-      return this.reject(
-        `The selected Flatpak exceeds the ${Math.floor(this.options.maximumBytes / 1048576)} MB limit.`,
-        "",
-        name,
-        input.size,
-      );
+  constructor(options: ApplicationGateOptions) {
+    this.releases = requireVerifiedReleases(options.releases);
+    this.maximumBytes = options.maximumBytes;
+    this.maximumArtifactBytes = options.maximumArtifactBytes ?? options.maximumBytes;
+    for (const limit of [this.maximumBytes, this.maximumArtifactBytes]) {
+      if (!Number.isSafeInteger(limit) || limit <= 0) throw new Error("Package and artifact size limits must be positive safe integers.");
     }
-
-    this.setState("HASHING", "Calculating the Flatpak SHA-256 locally.", 0);
-    const flatpakSha256 = await sha256Blob(input, (processed, total) => {
-      this.options.onState("HASHING", "Calculating the Flatpak SHA-256 locally.", total ? processed / total : 0);
-    });
-    const release = this.options.releases.find((candidate) => candidate.flatpakSha256 === flatpakSha256);
-    if (!release) {
-      return this.reject("This Flatpak is not in the trusted Agora release registry.", flatpakSha256, name, input.size);
-    }
-
-    this.setState("VERIFIED", `Verified ${release.appId} ${release.version}.`, 1);
-    this.setState("LOADING_CAPSULE", "Loading the matching Agora browser capsule.");
-    const capsuleUrl = this.resolveCapsuleUrl(release.browserWasmFile);
-    const response = await fetch(capsuleUrl);
-    if (!response.ok) {
-      return this.reject(`Unable to load the matching capsule (${response.status}).`, flatpakSha256, name, input.size);
-    }
-    const capsuleBytes = new Uint8Array(await response.arrayBuffer());
-    if (sha256Bytes(capsuleBytes) !== release.browserWasmSha256) {
-      return this.reject(
-        "The Agora browser capsule checksum does not match the signed registry.",
-        flatpakSha256,
-        name,
-        input.size,
-      );
-    }
-    this.currentState = "READY";
-    this.selected = { accepted: true, fileName: name, size: input.size, flatpakSha256, release: structuredClone(release) };
-    this.options.onState("READY", `${release.appId} ${release.version} is ready for simulated execution.`, 1);
-    return { verification: structuredClone(this.selected), capsuleBytes };
+    this.registryBaseUrl = options.registryBaseUrl ? new URL(options.registryBaseUrl) : undefined;
+    this.onState = options.onState;
   }
 
-  markRunning(): void { this.setState("RUNNING", "Agora browser capsule is running."); }
-  markStopped(): void { this.setState("STOPPED", "Agora browser capsule stopped."); }
-  markFailed(message: string): void { this.setState("FAILED", message); }
+  get state(): ApplicationGateState { return this.currentState; }
+  get verification(): PackageVerification | undefined { return this.selected ? structuredClone(this.selected) : undefined; }
+
+  async verify(input: PackageInput): Promise<{ verification: Extract<PackageVerification, { accepted: true }>; artifactBytes: Uint8Array }> {
+    const attempt = ++this.attempt;
+    this.controller?.abort();
+    const controller = new AbortController();
+    this.controller = controller;
+    this.selected = undefined;
+    // Clear even the state before touching caller-controlled input properties.
+    this.currentState = "EMPTY";
+    let name = "";
+    let size = 0;
+    let packageSha256 = "";
+    try {
+      if (!(input instanceof Blob)) throw new Error("Select a package Blob.");
+      const inputName = input.name;
+      name = typeof inputName === "string" ? inputName : "";
+      size = input.size;
+      if (!Number.isSafeInteger(size) || size <= 0) throw new Error("The selected package is empty or has an invalid size.");
+      if (size > this.maximumBytes) throw new Error("The selected package exceeds the size limit.");
+      this.setState("HASHING", "Calculating the package SHA-256 locally.", 0);
+      const digest = new IncrementalSha256();
+      // Call the Blob implementation directly so a subclass cannot replace its stream with different bytes.
+      const reader = Blob.prototype.stream.call(input).getReader();
+      let processed = 0;
+      try {
+        for (;;) {
+          this.assertCurrent(attempt);
+          const { done, value } = await reader.read();
+          this.assertCurrent(attempt);
+          if (done) break;
+          processed += value.byteLength;
+          if (processed > this.maximumBytes || processed > size) throw new Error("The selected package exceeds the size limit or changed size.");
+          digest.update(value);
+          this.setState("HASHING", "Calculating the package SHA-256 locally.", processed / size);
+        }
+      } catch (error) {
+        void reader.cancel().catch(() => undefined);
+        throw error;
+      } finally {
+        reader.releaseLock();
+      }
+      if (processed !== size) throw new Error("The selected package size does not match its bytes.");
+      packageSha256 = digest.digestHex();
+      const release = this.releases.find((candidate) => candidate.packageSha256 === packageSha256);
+      if (!release) throw new Error("This package is not in the trusted release registry.");
+      this.setState("LOADING_ARTIFACT", "Loading the matching signed browser artifact.");
+      const artifactUrl = resolveReleaseUrl(release.artifactFile, this.registryBaseUrl);
+      this.assertCurrent(attempt);
+      const response = await fetch(artifactUrl, { signal: controller.signal, credentials: "omit", redirect: "error" });
+      this.assertCurrent(attempt);
+      if (!response.ok) throw new Error(`Unable to load the matching artifact (${response.status}).`);
+      const artifactBytes = await readBoundedResponse(response, this.maximumArtifactBytes, "Browser artifact");
+      this.assertCurrent(attempt);
+      if (artifactBytes.byteLength === 0) throw new Error("The matching browser artifact is empty.");
+      if (sha256Bytes(artifactBytes) !== release.artifactSha256) {
+        throw new Error("The browser artifact checksum does not match the signed registry.");
+      }
+      const verification: Extract<PackageVerification, { accepted: true }> = {
+        accepted: true, fileName: name, size, packageSha256, release: structuredClone(release),
+      };
+      this.selected = verification;
+      this.setState("READY", `${release.appId} ${release.version} has verified package and artifact bytes.`, 1);
+      this.assertCurrent(attempt);
+      return { verification: structuredClone(verification), artifactBytes };
+    } catch (error) {
+      // A superseded request must never overwrite the newer request's state or result.
+      if (attempt === this.attempt) {
+        const message = error instanceof Error ? error.message : "Package verification failed.";
+        this.selected = { accepted: false, fileName: name, size, packageSha256, reason: message };
+        this.setState("REJECTED", message);
+      }
+      throw error;
+    } finally {
+      if (attempt === this.attempt) this.controller = undefined;
+    }
+  }
 
   reset(): void {
+    ++this.attempt;
+    this.controller?.abort();
+    this.controller = undefined;
     this.selected = undefined;
-    this.setState("EMPTY", "Select an approved Agora Flatpak to begin.");
+    this.setState("EMPTY", "Select an approved package to verify its browser artifact.");
   }
 
-  private resolveCapsuleUrl(file: string): URL {
-    try {
-      return new URL(file, this.options.registryBaseUrl ?? (typeof document === "undefined" ? undefined : document.baseURI));
-    } catch {
-      throw new Error("The release registry does not provide a resolvable capsule URL.");
-    }
+  private assertCurrent(attempt: number): void {
+    if (attempt !== this.attempt) throw new Error("Package verification was superseded or reset.");
   }
 
-  private reject(message: string, flatpakSha256 = "", fileName = "", size = 0): never {
-    this.currentState = "REJECTED";
-    this.selected = { accepted: false, fileName, size, flatpakSha256, reason: message };
-    this.options.onState("REJECTED", message);
-    throw new Error(message);
-  }
-
-  private setState(state: ApplicationState, detail: string, progress?: number): void {
+  private setState(state: ApplicationGateState, detail: string, progress?: number): void {
     this.currentState = state;
-    this.options.onState(state, detail, progress);
+    this.onState?.(state, detail, progress);
   }
 }

@@ -1,56 +1,64 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://luminarylabs-dev.github.io/Frameulator/schemas/report.schema.json",
-  "title": "Frameulator browser simulation report",
+  "title": "Frameulator generic simulation report",
   "type": "object",
-  "required": ["schemaVersion", "frameulatorVersion", "scenario", "profile", "simulated", "evidenceLevel", "passed", "sessionState", "frameCount", "elapsedMilliseconds", "assertions", "services", "generatedAt", "application", "management"],
+  "required": [
+    "schemaVersion",
+    "frameulatorVersion",
+    "scenario",
+    "profile",
+    "simulated",
+    "evidenceLevel",
+    "passed",
+    "generatedAt",
+    "hostKernelExecuted",
+    "applicationExecuted",
+    "applicationAssertionsChecked",
+    "nativeExecutionProven",
+    "hardwareProven",
+    "events"
+  ],
   "properties": {
-    "schemaVersion": { "const": 2 },
-    "frameulatorVersion": { "const": "0.2.0" },
+    "schemaVersion": { "const": 3 },
+    "frameulatorVersion": { "const": "0.3.0" },
     "scenario": { "type": "string" },
     "profile": { "type": "string" },
     "simulated": { "const": true },
     "evidenceLevel": { "const": "F1-browser-wasm" },
     "passed": { "type": "boolean" },
-    "sessionState": { "enum": ["IDLE", "READY", "SYNCHRONIZED", "VISIBLE", "FOCUSED", "STOPPING", "LOSS_PENDING", "EXITING"] },
-    "frameCount": { "type": "integer", "minimum": 0 },
-    "elapsedMilliseconds": { "type": "number", "minimum": 0 },
-    "assertions": { "type": "array" },
-    "services": { "type": "object", "minProperties": 9 },
     "generatedAt": { "type": "string", "format": "date-time" },
+    "hostKernelExecuted": { "const": true },
+    "applicationExecuted": { "type": "boolean" },
+    "applicationAssertionsChecked": { "const": false },
+    "nativeExecutionProven": { "const": false },
+    "hardwareProven": { "const": false },
+    "events": { "type": "array", "maxItems": 256 },
     "application": {
       "type": "object",
-      "required": ["flatpakUploaded", "flatpakHashVerified", "matchingAgoraCodeExecuted", "executionMode", "nativeFlatpakInstalled", "nativeFlatpakExecuted", "hardwareSimulated", "appId", "version", "architecture", "sourceCommit", "flatpakSha256", "browserWasmSha256", "capsuleAbi", "managementProtocol"],
+      "required": [
+        "appId",
+        "version",
+        "adapterId",
+        "adapterVersion",
+        "source",
+        "executionMode",
+        "trust",
+        "signatureVerified",
+        "state",
+        "data",
+        "surfaces"
+      ],
       "properties": {
-        "flatpakUploaded": { "const": true },
-        "flatpakHashVerified": { "const": true },
-        "matchingAgoraCodeExecuted": { "type": "boolean" },
-        "executionMode": { "const": "browser-wasm-capsule" },
-        "nativeFlatpakInstalled": { "const": false },
-        "nativeFlatpakExecuted": { "const": false },
-        "hardwareSimulated": { "const": true },
-        "appId": { "const": "dev.luminarylabs.Agora" },
-        "version": { "pattern": "^0\\.0\\.[0-9]+$" },
-        "architecture": { "enum": ["x86_64", "aarch64"] },
-        "sourceCommit": { "pattern": "^[0-9a-f]{40}$" },
-        "flatpakSha256": { "pattern": "^[0-9a-f]{64}$" },
-        "browserWasmSha256": { "pattern": "^[0-9a-f]{64}$" },
-        "capsuleAbi": { "const": 2 },
-        "managementProtocol": { "const": "agora-management/2" }
-      },
-      "additionalProperties": false
-    },
-    "management": {
-      "type": "object",
-      "required": ["protocol", "simulatedDeployment", "nativeDeployment", "snapshot"],
-      "properties": {
-        "protocol": { "const": "agora-management/2" },
-        "simulatedDeployment": { "const": true },
-        "nativeDeployment": { "const": false },
-        "snapshot": { "$ref": "management-state.schema.json" }
-      },
-      "additionalProperties": false
+        "appId": { "type": "string" },
+        "version": { "type": "string" },
+        "adapterId": { "type": "string" },
+        "adapterVersion": { "type": "string" },
+        "source": { "type": "object" },
+        "executionMode": { "const": "trusted-js-adapter" },
+        "trust": { "const": "host-injected" },
+        "signatureVerified": { "const": false },
+        "surfaces": { "type": "array", "maxItems": 4 }
+      }
     }
-  },
-  "additionalProperties": false
+  }
 }

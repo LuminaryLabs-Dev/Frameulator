@@ -1,36 +1,9 @@
 # @luminarylabs/frameulator
 
-Lightweight Agora Flatpak verification and a fixed, single-screen MDM Lite workbench for Steam Frame-facing contracts. Agora's shared ABI 2 management core drives deploy, session, update, rollback, crash-recovery, project, and test state. Browser reports remain F1/F2 simulation evidence; the package never claims that the native Flatpak was installed or executed.
+Generic application-adapter and simulated XR contract workbench. A trusted adapter supplies lifecycle, structured input, state and bounded rgba8 surfaces; Frameulator supplies kernel simulation, rendering, controls and evidence reports.
 
-```bash
-npm install @luminarylabs/frameulator@0.2.0
-```
+Use the exported `Frameulator`, `ApplicationAdapterFactory`, `NeutralPanelAdapter`, `ApplicationGate` and `verifyReleaseRegistry` APIs. See the repository README and TypeScript declarations for full contracts.
 
-```js
-import { Frameulator, SteamFrameProfile } from "@luminarylabs/frameulator";
+Explicit adapter injection requires `worker:false`; default Worker mode contains the neutral sample only. No arbitrary JavaScript uploads or remote modules are executed. Signed package verification does not authorize injected JS.
 
-const lab = await Frameulator.create({
-  container: document.querySelector("#lab"),
-  profile: SteamFrameProfile,
-  renderer: "auto",
-  storage: "indexeddb",
-  network: "disabled",
-  releaseRegistry: "/releases/agora-0.0.2-release.json",
-  trustedReleaseKeys: [{
-    id: "luminary-release-2026",
-    algorithm: "Ed25519",
-    publicKeyBase64: trustedPublicKey,
-  }],
-});
-
-await lab.selectFlatpak(fileInput.files[0]);
-await lab.rehearseDeploy();
-await lab.launchCapsule();
-await lab.stopCapsule();
-const report = await lab.runScenario("normal-session");
-await lab.destroy();
-```
-
-For a custom element, import `@luminarylabs/frameulator/standalone`, call `defineFrameulatorElement()`, and configure `<frameulator-lab release-registry="…" trusted-key-id="…" trusted-public-key="…">`. Without a trusted signed registry, the element stays upload-gated and rejects all bundles.
-
-See the [repository documentation](https://github.com/LuminaryLabs-Dev/Frameulator) for Worker modes, jsDelivr use, build instructions, and evidence boundaries.
+Browser and local Node results are simulation evidence only. Native package execution and hardware proof are never implied. Private integrations and archived historical applications are excluded from this package.

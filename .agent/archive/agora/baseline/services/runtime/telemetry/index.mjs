@@ -1,0 +1,1 @@
+export class TelemetryBuffer{constructor(limit=512){this.limit=limit;this.events=[];}push(component,event,data={},correlationId=null){const e={timestamp:new Date().toISOString(),component,event,correlationId,data};this.events.push(e);if(this.events.length>this.limit)this.events.splice(0,this.events.length-this.limit);return e;}snapshot(){return structuredClone(this.events);}}

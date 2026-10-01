@@ -5,7 +5,7 @@ import { test } from "node:test";
 test("package metadata is exact and public", async () => {
   const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   assert.equal(metadata.name, "@luminarylabs/frameulator");
-  assert.equal(metadata.version, "0.2.0");
+  assert.equal(metadata.version, "0.3.0");
   assert.equal(metadata.publishConfig.access, "public");
   assert.equal(metadata.dependencies.three, "0.179.1");
 });

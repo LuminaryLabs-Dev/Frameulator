@@ -1,0 +1,15 @@
+{
+  "reviewedAt": "2026-10-01T20:14:59.700590+00:00",
+  "images": [
+    {
+      "file": "before.png",
+      "sha256": "010c8081cd9578b0ccef41a2feb6152e86c82f71ff97d844dd3f322639aa104b"
+    },
+    {
+      "file": "after.png",
+      "sha256": "f82f9b391b3a188ba51bf00bcdedc870d513ee4e2273adc917f66e0c7f896e87"
+    }
+  ],
+  "visualResult": "Perspective panel is visible and unclipped; actual neutral adapter surface changes blue shade after real raycast pointer activation. Simple sample color panel, not a product UI or browser screenshot.",
+  "scope": "Image inspection supplements automated44800pixel-difference and deterministicrepeat/replay checks."
+}

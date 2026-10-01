@@ -1,0 +1,220 @@
+{
+  "schema": "frameulator.framebuffer-proof/1",
+  "verdict": "pass",
+  "backend": "Three \u2192 native wgpu/Vulkan \u2192 Mesa Lavapipe",
+  "capabilities": {
+    "backend": "vulkan",
+    "texture": {
+      "supported": true,
+      "synchronization": "submission-complete",
+      "scope": "same-renderer-device",
+      "format": "rgba8unorm",
+      "usage": "copy-dst|copy-src|texture-binding",
+      "layout": "backend-managed-copy-dst",
+      "handleType": "vulkan-image"
+    },
+    "dmaBuf": {
+      "supported": false,
+      "reason": "wgpu-managed Vulkan textures are not allocated with exportable DMA-BUF external-memory flags"
+    },
+    "encoderSurface": {
+      "supported": false,
+      "reason": "requires a VA-created surface imported modifier/plane-exactly, foreign queue ownership, explicit/implicit sync bridging, and a real VAAPI/VCN encode validation on matched Linux AMD hardware",
+      "prerequisitesReady": false,
+      "prerequisites": "Vulkan adapter is missing encoder-surface prerequisite extensions: VK_EXT_image_drm_format_modifier, VK_EXT_physical_device_drm, VK_KHR_external_semaphore_fd"
+    },
+    "mediaFormats": [
+      {
+        "format": "rgba8unorm",
+        "supported": true,
+        "storage": "single-texture",
+        "planeFormats": [
+          "rgba8unorm"
+        ]
+      },
+      {
+        "format": "nv12-planes",
+        "supported": true,
+        "storage": "separate-textures",
+        "planeFormats": [
+          "r8unorm-y",
+          "rg8unorm-uv"
+        ],
+        "colorMatrix": "bt709",
+        "colorRange": "limited",
+        "chromaSiting": "centered-2x2-box"
+      },
+      {
+        "format": "p010-planes",
+        "supported": true,
+        "storage": "separate-textures",
+        "planeFormats": [
+          "r16unorm-y10-msb",
+          "rg16unorm-uv10-msb"
+        ],
+        "colorMatrix": "bt709",
+        "colorRange": "limited",
+        "chromaSiting": "centered-2x2-box"
+      },
+      {
+        "format": "i420-planes",
+        "supported": true,
+        "storage": "separate-textures+packed-cpu-fallback",
+        "planeFormats": [
+          "r8unorm-y",
+          "r8unorm-u",
+          "r8unorm-v"
+        ],
+        "colorMatrix": "bt601",
+        "colorRange": "limited",
+        "chromaSiting": "centered-2x2-box"
+      }
+    ]
+  },
+  "captures": [
+    {
+      "file": "before.png",
+      "sha256": "010c8081cd9578b0ccef41a2feb6152e86c82f71ff97d844dd3f322639aa104b",
+      "rgbaSha256": "a951122f71496e2fe3853c160918aa59755ca89402584994d48fb5d0c9c62277",
+      "width": 768,
+      "height": 512
+    },
+    {
+      "file": "after.png",
+      "sha256": "f82f9b391b3a188ba51bf00bcdedc870d513ee4e2273adc917f66e0c7f896e87",
+      "rgbaSha256": "a2961f39f301d102cbe6772153452e279afc5fdf6c28c4aa02d6f8b97fefa897",
+      "width": 768,
+      "height": 512
+    },
+    {
+      "file": "repeat.png",
+      "sha256": "f82f9b391b3a188ba51bf00bcdedc870d513ee4e2273adc917f66e0c7f896e87",
+      "rgbaSha256": "a2961f39f301d102cbe6772153452e279afc5fdf6c28c4aa02d6f8b97fefa897",
+      "width": 768,
+      "height": 512
+    },
+    {
+      "file": "replay.png",
+      "sha256": "f82f9b391b3a188ba51bf00bcdedc870d513ee4e2273adc917f66e0c7f896e87",
+      "rgbaSha256": "a2961f39f301d102cbe6772153452e279afc5fdf6c28c4aa02d6f8b97fefa897",
+      "width": 768,
+      "height": 512
+    }
+  ],
+  "changedPixels": 44800,
+  "input": {
+    "ndc": [
+      -9.657795746205896e-20,
+      -3.785929843493372e-17
+    ],
+    "uv": [
+      0.49999999999999917,
+      0.4999999999999994
+    ]
+  },
+  "deterministicRepeat": true,
+  "freshRuntimeReplay": true,
+  "source": {
+    "packages/frameulator/src/Frameulator.ts": "b4e29ee6ea6a793a9262e99c5b11eb6c00df85de77aa8c21ad539b7d9bae1b45",
+    "packages/frameulator/src/application/ApplicationHost.ts": "3d58ab82b3947a42e962457949a3018032c0102a0c013a6d0147ee0051742c6e",
+    "packages/frameulator/src/application/contracts.ts": "4bb25e7bda7c44dae60cb3a0ad38ca6bd396f1b75552cf48462cf632f11e7f46",
+    "packages/frameulator/src/application/NeutralPanel.ts": "ab68eb024467cc551316d92f427290701c6b48d8a2e81aacf8c60f885f73370c",
+    "packages/frameulator/dist/frameulator.js": "13fe64b4c3288fabaab266da9fb481802e726b0bce10e1b34b89794403b9cc64",
+    "packages/frameulator/dist/frameulator.wasm": "e168287d74b539ed9f2f8615275584d7ac0dccbd0837a003a2324e34068e4a1e"
+  },
+  "report": {
+    "schemaVersion": 3,
+    "frameulatorVersion": "0.3.0",
+    "scenario": "interactive",
+    "profile": "steam-frame",
+    "simulated": true,
+    "evidenceLevel": "F1-browser-wasm",
+    "passed": false,
+    "generatedAt": "2026-10-01T20:14:12.240Z",
+    "hostKernelExecuted": true,
+    "applicationExecuted": true,
+    "applicationAssertionsChecked": false,
+    "nativeExecutionProven": false,
+    "hardwareProven": false,
+    "application": {
+      "appId": "framebuffer-panel",
+      "version": "1.0.0",
+      "adapterId": "neutral-panel",
+      "adapterVersion": "1.0.0",
+      "source": {
+        "kind": "builtin",
+        "version": "0.3.0"
+      },
+      "executionMode": "trusted-js-adapter",
+      "trust": "host-injected",
+      "signatureVerified": false,
+      "state": "RUNNING",
+      "manifestSha256": "2487a5930e255338f67c67006a4966b06da6aef76a467241f5ab236e797eae6b",
+      "config": {},
+      "data": {
+        "count": 1,
+        "running": true
+      },
+      "surfaces": [
+        {
+          "id": "surface.main",
+          "width": 256,
+          "height": 160,
+          "revision": 1,
+          "sha256": "87b1a02260ba5466cc3ee5ac15f091f4b67c8f7b29cdefa2357a201442c92aad"
+        }
+      ]
+    },
+    "events": [
+      {
+        "sequence": 1,
+        "method": "loadApplication"
+      },
+      {
+        "sequence": 2,
+        "method": "start"
+      },
+      {
+        "sequence": 3,
+        "method": "step",
+        "parameters": 16
+      },
+      {
+        "sequence": 4,
+        "method": "input",
+        "parameters": {
+          "type": "pointer",
+          "surfaceId": "surface.main",
+          "phase": "down",
+          "x": 0.49999999999999917,
+          "y": 0.5000000000000007,
+          "button": 0
+        }
+      },
+      {
+        "sequence": 5,
+        "method": "input",
+        "parameters": {
+          "type": "pointer",
+          "surfaceId": "surface.main",
+          "phase": "up",
+          "x": 0.49999999999999917,
+          "y": 0.5000000000000007,
+          "button": 0
+        }
+      }
+    ]
+  },
+  "covered": [
+    "Actual Frameulator injected neutral adapter lifecycle and pixels",
+    "Real Three perspective mesh and raycast UV",
+    "Frameulator pointer dispatch to actual adapter state"
+  ],
+  "notCovered": [
+    "Browser DOM/CSS/OS events",
+    "Browser FrameulatorRenderer WebGL path",
+    "Native SteamVR/OpenXR/headset",
+    "External application browser execution"
+  ],
+  "visualReview": "pending"
+}

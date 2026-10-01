@@ -1,605 +1,419 @@
 import { Frameulator } from "../Frameulator";
 import { SteamFrameProfile } from "../profile";
+import type { RenderSurface, SurfacePointerInput } from "../renderer/FrameulatorRenderer";
 import styles from "../styles.css";
-import { WorkspaceStore } from "../storage/WorkspaceStore";
-import type {
-  ApplicationState,
-  FlatpakVerification,
-  ManagementSnapshot,
-  ScenarioReport,
-  ServiceName,
-  ServiceStatus,
-  TrustedReleaseKey,
-} from "../types";
 
 const HTMLElementBase = (globalThis.HTMLElement ?? class {}) as typeof HTMLElement;
-const serviceOrder: ServiceName[] = [
-  "hardware", "gpu", "vulkan", "openxr", "compositor", "firmware", "tracking", "controllers", "host",
-];
-const sections = ["package", "device", "deploy", "session", "tests", "evidence"] as const;
-type WorkbenchSection = typeof sections[number];
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  })[character] ?? character);
+type InspectorTab = "application" | "device" | "evidence" | "logs";
+interface WorkbenchSnapshot {
+  sessionState: string;
+  frameCount?: number;
+  application?: {
+    state: string;
+    adapterId?: string;
+    descriptor: { id: string; name: string; version: string };
+    data: unknown;
+    surfaces: RenderSurface[];
+  };
+}
+interface SurfacePreview {
+  element: HTMLElement;
+  canvas: HTMLCanvasElement;
+  label: HTMLElement;
+  surface: RenderSurface;
+  revision: number;
+  pointerId?: number;
+  lastInput?: SurfacePointerInput;
 }
 
-const emptyManagement: ManagementSnapshot = {
-  protocol: "agora-management/2",
-  deviceState: "OFFLINE",
-  deploymentState: "ABSENT",
-  applicationSessionState: "IDLE",
-  testState: "NOT_RUN",
-  projectState: "EMPTY",
-  currentRelease: 0,
-  previousRelease: 0,
-  eventCount: 0,
-  lastEvent: "RESET",
-  events: [],
-};
-
+/** A neutral example UI. Embedders can use `frameulator` after ready to load an adapter. */
 export class FrameulatorElement extends HTMLElementBase {
   private lab?: Frameulator;
   private initialized = false;
-  private applicationState: ApplicationState = "EMPTY";
-  private management: ManagementSnapshot = structuredClone(emptyManagement);
-  private verification?: FlatpakVerification;
-  private activeSection: WorkbenchSection = "package";
-  private services?: Record<ServiceName, ServiceStatus>;
+  private generation = 0;
+  private bindings?: AbortController;
+  private busy = false;
+  private applicationState = "EMPTY";
+  private activeTab: InspectorTab = "application";
+  private currentSnapshot?: WorkbenchSnapshot;
+  private lastInspection = 0;
   private logEntries: string[] = [];
-  private lastReport?: ScenarioReport;
-  private readonly workspace = new WorkspaceStore();
-  private gamepadFrame = 0;
-  private gamepadButtons = new Set<number>();
+  private lastLifecycleLog = "";
+  private previews = new Map<string, SurfacePreview>();
+
+  get frameulator(): Frameulator | undefined { return this.lab; }
 
   connectedCallback(): void {
     if (this.initialized) return;
     this.initialized = true;
-    this.mount().catch((error) => this.showError(error));
+    const generation = ++this.generation;
+    this.mount(generation).catch((error) => {
+      if (generation === this.generation) this.showError(error);
+    });
   }
 
   disconnectedCallback(): void {
-    this.ownerDocument.removeEventListener("keydown", this.handleKeyDown);
-    if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(this.gamepadFrame);
+    ++this.generation;
+    this.bindings?.abort();
     this.lab?.destroy().catch(() => undefined);
     this.lab = undefined;
+    this.previews.clear();
     this.initialized = false;
+    this.applicationState = "EMPTY";
+    this.currentSnapshot = undefined;
+    this.lastLifecycleLog = "";
+    this.busy = false;
   }
 
-  private async mount(): Promise<void> {
-    this.activeSection = this.workspace.load()?.lastSection ?? "package";
+  private async mount(generation: number): Promise<void> {
+    this.activeTab = "application";
     const root = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+    this.bindings = new AbortController();
+    const signal = this.bindings.signal;
     root.innerHTML = `
       <style>${styles}</style>
-      <section class="frameulator-shell" aria-label="Frameulator Agora operator workbench">
+      <section class="frameulator-shell" aria-label="Frameulator application workbench" aria-busy="true">
         <header class="frameulator-topbar">
-          <div class="frameulator-brand"><span class="frameulator-mark" aria-hidden="true"></span><strong>Frameulator</strong><span>0.2.0</span></div>
-          <div class="frameulator-context" aria-label="Current target">
-            <span><small>PACKAGE</small><strong data-top-package>None</strong></span>
-            <span><small>DEVICE</small><strong data-top-device>Offline</strong></span>
-            <span><small>PROOF</small><strong>F1/F2 simulation</strong></span>
-          </div>
+          <div class="frameulator-brand"><span class="frameulator-mark" aria-hidden="true">F</span><div><strong>Frameulator</strong><small>APPLICATION WORKBENCH</small></div></div>
+          <span class="simulation-badge">BROWSER SIMULATION</span>
           <div class="frameulator-global-actions">
-            <button type="button" data-action="select">Open Flatpak</button>
-            <button type="button" class="primary" data-action="run" data-workbench-action="normal" disabled>Run test</button>
-            <button type="button" class="danger" data-action="stop" data-workbench-action="stop" disabled>Stop</button>
-            <button type="button" class="inspector-toggle" data-action="toggle-inspector" aria-label="Toggle inspector">Inspect</button>
+            <button type="button" data-action="sample" disabled>Load sample</button>
+            <button type="button" class="primary" data-action="start" disabled>Start</button>
+            <button type="button" data-action="stop" disabled>Stop</button>
+            <button type="button" data-action="export" disabled>Export report</button>
           </div>
-          <input type="file" accept=".flatpak,application/vnd.flatpak" data-flatpak hidden />
-          <input type="file" accept=".json,.frameproof.json,application/json" data-evidence hidden />
         </header>
-
-        <nav class="frameulator-rail" aria-label="Workbench sections">
-          ${sections.map((section, index) => `
-            <button type="button" data-section="${section}" ${section === this.activeSection ? 'aria-current="page"' : ""}>
-              <span class="rail-index">0${index + 1}</span><span class="rail-label">${section}</span><i data-section-state="${section}"></i>
-            </button>
-          `).join("")}
-        </nav>
-
-        <main class="frameulator-stage" aria-label="Three-dimensional Steam Frame simulation">
-          <div class="frameulator-viewport-hud">
-            <span data-hud-session>SESSION · IDLE</span>
-            <span data-hud-frames>0 FRAMES</span>
-          </div>
-          <div class="frameulator-upload" data-upload-state="EMPTY">
-            <p class="frameulator-kicker">APPLICATION REQUIRED</p>
-            <strong>Open Agora.flatpak</strong>
-            <p>Verify an approved release locally, then rehearse it against the simulated Steam Frame.</p>
-            <button type="button" class="primary" data-action="select">Select Flatpak</button>
-            <progress value="0" max="1" hidden></progress>
-            <span data-upload-detail>The file stays on this device. It is not uploaded.</span>
-          </div>
-          <div class="frameulator-eye-dock" aria-label="Stereo eye previews">
-            <figure><figcaption>LEFT</figcaption><canvas width="180" height="132" data-eye="left" aria-label="Left eye preview"></canvas></figure>
-            <figure><figcaption>RIGHT</figcaption><canvas width="180" height="132" data-eye="right" aria-label="Right eye preview"></canvas></figure>
-          </div>
-        </main>
-
-        <aside class="frameulator-inspector" data-open="true" aria-label="Workbench inspector">
-          <header><div><small>INSPECTOR</small><h2 data-inspector-title>Package</h2></div><span class="state-chip" data-inspector-state>EMPTY</span></header>
-          <div class="frameulator-tabs" role="tablist" aria-label="Inspector views">
-            <button type="button" role="tab" aria-selected="true" data-tab="inspect">Inspect</button>
-            <button type="button" role="tab" aria-selected="false" data-tab="services">Services</button>
-            <button type="button" role="tab" aria-selected="false" data-tab="logs">Logs</button>
-            <button type="button" role="tab" aria-selected="false" data-tab="proof">Proof</button>
-          </div>
-          <div class="frameulator-inspector-body">
-            <section role="tabpanel" data-panel="inspect">
-              <div data-section-content></div>
-            </section>
-            <section role="tabpanel" data-panel="services" hidden>
-              <div class="frameulator-services" aria-label="Simulated service status"></div>
-            </section>
-            <section role="tabpanel" data-panel="logs" hidden>
-              <div class="frameulator-logs" role="log" aria-live="polite"></div>
-            </section>
-            <section role="tabpanel" data-panel="proof" hidden>
-              <div class="proof-stack">
-                <article data-proof-browser><span>Browser contract</span><strong>Waiting for a run</strong><small>F1/F2 · simulated</small></article>
-                <article data-proof-native><span>Native Flatpak smoke</span><strong>Not imported</strong><small>Separate CI evidence</small></article>
-                <article><span>Native Vulkan</span><strong>Not tested</strong><small>F3 required</small></article>
-                <article><span>Native OpenXR</span><strong>Not tested</strong><small>F4 required</small></article>
-                <article><span>ARM64 Flatpak</span><strong>Not tested</strong><small>F5 required</small></article>
-                <article><span>Physical Frame</span><strong>Not tested</strong><small>F6 required</small></article>
+        <main class="frameulator-main">
+          <section class="frameulator-visuals" aria-label="Simulation and adapter surfaces">
+            <div class="section-heading"><div><span class="eyebrow">01 / SIMULATION</span><h1>Application space</h1></div><span class="state-chip" data-session-state>IDLE</span></div>
+            <div class="frameulator-stage" aria-label="Three-dimensional simulated device">
+              <div class="frameulator-viewport-hud"><span>STEAM FRAME PROFILE</span><span data-frame-count>0 FRAMES</span></div>
+              <div class="frameulator-empty" data-empty>
+                <span class="empty-symbol" aria-hidden="true">＋</span>
+                <h2>A space for your application</h2>
+                <p>Load the neutral sample to explore lifecycle, surface output and input.</p>
+                <button type="button" class="primary" data-action="sample" disabled>Load sample panel</button>
               </div>
+              <div class="frameulator-eye-dock" aria-label="Simulated scene eye previews">
+                <figure><canvas width="180" height="132" data-eye="left" aria-label="Simulated scene left eye"></canvas><figcaption>SIMULATED · LEFT</figcaption></figure>
+                <figure><canvas width="180" height="132" data-eye="right" aria-label="Simulated scene right eye"></canvas><figcaption>SIMULATED · RIGHT</figcaption></figure>
+              </div>
+            </div>
+            <section class="frameulator-surfaces" aria-label="Adapter RGBA surfaces">
+              <div class="surface-heading"><div><span class="eyebrow">02 / ADAPTER OUTPUT</span><h2>Surface inspector <span data-surface-count>0</span></h2></div><span class="surface-help">RGBA · TOP-LEFT ORIGIN</span></div>
+              <p class="surface-placeholder" data-surface-placeholder>No surfaces yet. Adapter pixel output will appear here.</p>
+              <div class="surface-list" data-surfaces></div>
+              <output class="pixel-readout" data-pixel-readout>Point at a surface to inspect pixels. Click to send normalized input.</output>
             </section>
-          </div>
-        </aside>
+          </section>
+          <aside class="frameulator-inspector" aria-label="Application inspector">
+            <header><div><span class="eyebrow">INSPECTOR</span><h2 data-application-name>No application</h2></div><span class="state-chip" data-application-state>EMPTY</span></header>
+            <div class="frameulator-tabs" role="tablist" aria-label="Inspector views">
+              <button type="button" id="tab-application" role="tab" aria-controls="panel-application" aria-selected="true" data-tab="application">App</button>
+              <button type="button" id="tab-device" role="tab" aria-controls="panel-device" aria-selected="false" tabindex="-1" data-tab="device">Device</button>
+              <button type="button" id="tab-evidence" role="tab" aria-controls="panel-evidence" aria-selected="false" tabindex="-1" data-tab="evidence">Evidence</button>
+              <button type="button" id="tab-logs" role="tab" aria-controls="panel-logs" aria-selected="false" tabindex="-1" data-tab="logs">Log</button>
+            </div>
+            <div class="frameulator-inspector-body">
+              <section id="panel-application" role="tabpanel" aria-labelledby="tab-application" data-panel="application">
+                <p class="section-note">Registered adapters own application behavior. Frameulator supplies the simulated device, lifecycle and inspection tools.</p>
+                <dl><div><dt>Application ID</dt><dd data-app-id>—</dd></div><div><dt>Version</dt><dd data-app-version>—</dd></div><div><dt>Lifecycle</dt><dd data-app-lifecycle>EMPTY</dd></div><div><dt>Surface count</dt><dd data-app-surfaces>0</dd></div></dl>
+                <div class="action-grid"><button type="button" data-action="reset" disabled>Reset</button><button type="button" data-action="remove" disabled>Remove</button></div>
+                <button type="button" class="sample-action" data-action="advance" disabled>Advance sample color <span aria-hidden="true">↗</span></button>
+                <h3>Application data</h3><pre class="code-inspector" data-app-data aria-label="Application state JSON">No application loaded</pre>
+              </section>
+              <section id="panel-device" role="tabpanel" aria-labelledby="tab-device" data-panel="device" hidden>
+                <p class="section-note">A browser-side model for repeatable inspection. It does not execute a native package or establish device compatibility.</p>
+                <dl><div><dt>Profile</dt><dd>Steam Frame</dd></div><div><dt>Architecture model</dt><dd>${SteamFrameProfile.hardware.architecture}</dd></div><div><dt>Eye resolution model</dt><dd>${SteamFrameProfile.display.eyeWidth} × ${SteamFrameProfile.display.eyeHeight}</dd></div><div><dt>Refresh model</dt><dd>${SteamFrameProfile.display.defaultRefreshRateHz} Hz</dd></div><div><dt>Runtime model</dt><dd>${SteamFrameProfile.openxr.apiVersion}</dd></div></dl>
+                <p class="boundary-note">The main view and eye previews visualize the device model. The surface inspector shows the adapter’s actual RGBA output.</p>
+              </section>
+              <section id="panel-evidence" role="tabpanel" aria-labelledby="tab-evidence" data-panel="evidence" hidden>
+                <div class="evidence-label">SIMULATION ONLY</div><h3>Inspectable, bounded evidence</h3>
+                <p class="section-note">Export a JSON report of the current simulated run. Native execution, operating-system behavior and physical hardware require separate validation.</p>
+                <button type="button" data-action="export" disabled>Export current report</button>
+                <pre class="code-inspector" data-report aria-label="Exported report preview">No report exported</pre>
+              </section>
+              <section id="panel-logs" role="tabpanel" aria-labelledby="tab-logs" data-panel="logs" hidden><pre class="frameulator-logs" role="log" aria-live="polite"></pre></section>
+            </div>
+            <footer class="inspector-footer"><span aria-hidden="true">◇</span> Application-neutral adapter contract</footer>
+          </aside>
+        </main>
+        <footer class="frameulator-statusbar"><span class="status-light" data-status-light></span><span role="status" aria-live="polite" data-status>Initializing workbench…</span><span data-version></span></footer>
+      </section>`;
 
-        <footer class="frameulator-statusbar">
-          <span class="status-light" data-status-light></span>
-          <span data-status role="status" aria-live="polite">Flatpak required</span>
-          <span data-last-event>RESET</span>
-          <span>LOCAL · NETWORK DISABLED</span>
-        </footer>
-      </section>
-    `;
-
-    const stage = root.querySelector<HTMLElement>(".frameulator-stage");
-    const left = root.querySelector<HTMLCanvasElement>('[data-eye="left"]');
-    const right = root.querySelector<HTMLCanvasElement>('[data-eye="right"]');
-    if (!stage || !left || !right) throw new Error("Unable to create the Frameulator workbench.");
-
-    const keyId = this.getAttribute("trusted-key-id");
-    const publicKeyBase64 = this.getAttribute("trusted-public-key");
-    const trustedReleaseKeys: TrustedReleaseKey[] = keyId && publicKeyBase64
-      ? [{ id: keyId, algorithm: "Ed25519", publicKeyBase64 }]
-      : [];
-    const registry = this.getAttribute("release-registry") || undefined;
-    this.lab = await Frameulator.create({
-      container: stage,
-      profile: "steam-frame",
-      renderer: "auto",
-      storage: "indexeddb",
-      network: "disabled",
-      worker: "inline",
-      releaseRegistry: registry,
-      trustedReleaseKeys,
-    });
-    this.lab.setEyePreviews(left, right);
-    if (this.getAttribute("release-configured") === "false") {
-      this.setText("[data-upload-detail]", "No signed Agora 0.0.2 release is published yet. The Flatpak gate remains locked.");
-      this.setText("[data-status]", "Flatpak required · signed release registry unavailable");
+    root.addEventListener("click", this.handleClick, { signal });
+    root.addEventListener("keydown", this.handleKeyDown as EventListener, { signal });
+    const stage = root.querySelector<HTMLElement>(".frameulator-stage")!;
+    let lab: Frameulator;
+    try {
+      lab = await Frameulator.create({ container: stage, profile: "steam-frame", renderer: "auto", storage: "memory", network: "disabled", worker: false });
+    } catch (error) {
+      // Surface inspection and lifecycle remain usable if this browser has no WebGL.
+      stage.querySelectorAll(":scope > canvas").forEach((canvas) => canvas.remove());
+      lab = await Frameulator.create({ profile: "steam-frame", renderer: "none", storage: "memory", network: "disabled", worker: false });
+      stage.dataset.renderer = "unavailable";
+      this.appendLog(`3D preview unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      this.setText(".frameulator-viewport-hud span", "3D PREVIEW UNAVAILABLE · SURFACE INSPECTION ACTIVE");
     }
-    this.forwardEvents();
-    this.services = await this.lab.call("services.status") as Record<ServiceName, ServiceStatus>;
-    const previousReport = await this.lab.latestReport();
-    if (previousReport) this.restoreReportSummary(previousReport);
-    const previousNative = await this.lab.latestNativeEvidence();
-    if (previousNative) this.restoreNativeSummary(previousNative);
-    this.renderServices();
-    this.bindControls();
-    if (typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
-      this.gamepadFrame = requestAnimationFrame(this.pollGamepad);
-    }
-    const inspector = root.querySelector<HTMLElement>(".frameulator-inspector");
-    if (inspector && matchMedia("(max-width: 820px)").matches) inspector.dataset.open = "false";
-    this.renderSection();
+    if (generation !== this.generation) { await lab.destroy(); return; }
+    this.lab = lab;
+    const left = root.querySelector<HTMLCanvasElement>('[data-eye="left"]')!;
+    const right = root.querySelector<HTMLCanvasElement>('[data-eye="right"]')!;
+    lab.setEyePreviews(left, right);
+    this.forwardEvents(lab, signal);
+    await this.refresh();
+    this.setText("[data-version]", `v${lab.version} · SIMULATED`);
+    this.setText("[data-status]", "Ready · load an application adapter to begin");
+    this.appendLog("Workbench ready. No application loaded.");
+    root.querySelector(".frameulator-shell")?.setAttribute("aria-busy", "false");
     this.syncControls();
-    this.dispatch("frameulator-ready", { version: this.lab.version, simulated: true, applicationState: "EMPTY" });
+    this.dispatch("frameulator-ready", { version: lab.version, simulated: true, applicationState: "EMPTY" });
   }
 
-  private forwardEvents(): void {
-    if (!this.lab) return;
-    const forwarded = [
-      "frameulator-frame", "frameulator-state", "frameulator-result", "frameulator-error",
-      "frameulator-application", "frameulator-flatpak-verified", "frameulator-management",
-      "frameulator-device", "frameulator-deployment", "frameulator-session",
-      "frameulator-package", "frameulator-log", "frameulator-evidence",
-    ];
-    for (const type of forwarded) {
-      this.lab.addEventListener(type, ((event: CustomEvent) => {
-        if (type === "frameulator-application") this.setApplicationState(event.detail.state, event.detail.detail, event.detail.progress);
-        if (type === "frameulator-management") this.setManagement(event.detail);
-        if (type === "frameulator-frame") this.updateFrameHud(event.detail.applicationFrame);
-        if (type === "frameulator-result") this.showReport(event.detail);
+  private forwardEvents(lab: Frameulator, signal: AbortSignal): void {
+    for (const type of ["frameulator-frame", "frameulator-state", "frameulator-application", "frameulator-error", "frameulator-result"]) {
+      lab.addEventListener(type, ((event: CustomEvent) => {
+        if (type === "frameulator-frame") this.renderSnapshot(event.detail as WorkbenchSnapshot);
+        if (type === "frameulator-state" && event.detail?.sessionState) this.renderSnapshot(event.detail as WorkbenchSnapshot);
+        if (type === "frameulator-application") {
+          this.applicationState = event.detail.state;
+          const lifecycleLog = `${event.detail.state}${event.detail.detail ? ` · ${event.detail.detail}` : ""}`;
+          if (lifecycleLog !== this.lastLifecycleLog) this.appendLog(lifecycleLog);
+          this.lastLifecycleLog = lifecycleLog;
+          this.syncControls();
+        }
+        if (type === "frameulator-error") this.showError(event.detail?.message ?? "Application error", false);
         this.dispatch(type, event.detail);
-      }) as EventListener);
+      }) as EventListener, { signal });
     }
   }
 
-  private bindControls(): void {
-    const root = this.shadowRoot;
-    const input = root?.querySelector<HTMLInputElement>("[data-flatpak]");
-    const evidenceInput = root?.querySelector<HTMLInputElement>("[data-evidence]");
-    const upload = root?.querySelector<HTMLElement>(".frameulator-upload");
-    root?.querySelectorAll('[data-action="select"]').forEach((button) => button.addEventListener("click", () => input?.click()));
-    input?.addEventListener("change", () => {
-      const file = input.files?.[0];
-      if (file) this.selectFlatpak(file);
-      input.value = "";
-    });
-    evidenceInput?.addEventListener("change", () => {
-      const file = evidenceInput.files?.[0];
-      if (file) this.importEvidence(file).catch((error) => this.showError(error));
-      evidenceInput.value = "";
-    });
-    upload?.addEventListener("dragover", (event) => { event.preventDefault(); upload.dataset.dragging = "true"; });
-    upload?.addEventListener("dragleave", () => { delete upload.dataset.dragging; });
-    upload?.addEventListener("drop", (event) => {
-      event.preventDefault();
-      delete upload.dataset.dragging;
-      const file = event.dataTransfer?.files[0];
-      if (file) this.selectFlatpak(file);
-    });
-    root?.querySelectorAll<HTMLElement>("[data-section]").forEach((button) => button.addEventListener("click", () => {
-      this.selectSection(button.dataset.section as WorkbenchSection);
-    }));
-    root?.querySelectorAll<HTMLElement>("[data-tab]").forEach((button) => button.addEventListener("click", () => {
-      this.selectInspectorTab(button.dataset.tab ?? "inspect");
-    }));
-    root?.querySelector('[data-action="toggle-inspector"]')?.addEventListener("click", () => {
-      const inspector = root.querySelector<HTMLElement>(".frameulator-inspector");
-      if (inspector) inspector.dataset.open = String(inspector.dataset.open !== "true");
-    });
-    root?.addEventListener("click", (event) => this.handleAction(event));
-    this.ownerDocument.addEventListener("keydown", this.handleKeyDown);
-  }
-
-  private handleAction(event: Event): void {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-workbench-action]");
-    if (!target || target.matches(":disabled")) return;
-    const action = target.dataset.workbenchAction;
-    const operations: Record<string, () => Promise<unknown>> = {
-      select: async () => {
-        this.shadowRoot?.querySelector<HTMLInputElement>("[data-flatpak]")?.click();
-      },
-      import: async () => {
-        this.shadowRoot?.querySelector<HTMLInputElement>("[data-evidence]")?.click();
-      },
-      deploy: () => this.lab!.rehearseDeploy(),
-      launch: () => this.lab!.start(),
-      stop: () => this.lab!.stop(),
-      restart: () => this.lab!.restartCapsule(),
-      crash: () => this.lab!.simulateCrash(),
-      recover: () => this.lab!.recoverCrash(),
-      update: () => this.lab!.simulateUpdate(this.management.currentRelease + 1),
-      "failed-update": () => this.lab!.simulateFailedUpdate(this.management.currentRelease + 1),
-      rollback: () => this.lab!.simulateRollback(),
-      remove: () => this.removeApplication(),
-      normal: () => this.runScenario("normal-session"),
-      tracking: () => this.runScenario("tracking-recovery"),
-      controller: () => this.pulseController(),
-      loss: () => this.lab!.injectEvent("tracking-lost"),
-      restore: () => this.lab!.injectEvent("tracking-restored"),
-      export: () => this.downloadReport(),
-    };
-    if (!action || !operations[action]) return;
-    operations[action]().catch((error) => this.showError(error));
-  }
+  private handleClick = (event: Event): void => {
+    const target = (event.target as Element).closest<HTMLButtonElement>("button");
+    if (!target || target.disabled) return;
+    if (target.dataset.tab) { this.selectTab(target.dataset.tab as InspectorTab); return; }
+    const action = target.dataset.action;
+    if (action) void this.perform(action);
+  };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "o") {
-      event.preventDefault();
-      this.shadowRoot?.querySelector<HTMLInputElement>("[data-flatpak]")?.click();
-    }
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-      event.preventDefault();
-      if (["READY", "RUNNING", "STOPPED"].includes(this.applicationState)) this.runScenario("normal-session").catch((error) => this.showError(error));
-    }
-    if (event.key === "Escape" && this.management.applicationSessionState === "RUNNING") {
-      this.lab?.stop().catch((error) => this.showError(error));
-    }
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-      this.moveFocus(event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1);
+    const button = (event.target as Element).closest<HTMLButtonElement>("[data-tab]");
+    if (button && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      const tabs: InspectorTab[] = ["application", "device", "evidence", "logs"];
+      const index = tabs.indexOf(this.activeTab);
+      const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      this.selectTab(tabs[next]);
+      this.shadowRoot?.querySelector<HTMLButtonElement>(`[data-tab="${tabs[next]}"]`)?.focus();
       event.preventDefault();
     }
-    const sectionIndex = Number(event.key) - 1;
-    if (sectionIndex >= 0 && sectionIndex < sections.length && !event.metaKey && !event.ctrlKey) {
-      this.selectSection(sections[sectionIndex]);
-    }
+    if (event.key === "Escape" && this.applicationState === "RUNNING" && !this.busy) void this.perform("stop");
   };
 
-  private pollGamepad = (): void => {
-    const gamepad = Array.from(navigator.getGamepads()).find((candidate) => candidate?.connected);
-    if (gamepad) {
-      const pressed = new Set(gamepad.buttons.flatMap((button, index) => button.pressed ? [index] : []));
-      if ([12, 14].some((index) => pressed.has(index) && !this.gamepadButtons.has(index))) this.moveFocus(-1);
-      if ([13, 15].some((index) => pressed.has(index) && !this.gamepadButtons.has(index))) this.moveFocus(1);
-      if (pressed.has(0) && !this.gamepadButtons.has(0)) {
-        (this.shadowRoot?.activeElement as HTMLButtonElement | null)?.click();
-      }
-      this.gamepadButtons = pressed;
-    } else {
-      this.gamepadButtons.clear();
-    }
-    this.gamepadFrame = requestAnimationFrame(this.pollGamepad);
-  };
-
-  private moveFocus(direction: -1 | 1): void {
-    const controls = Array.from(this.shadowRoot?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
-    if (controls.length === 0) return;
-    const current = controls.indexOf(this.shadowRoot?.activeElement as HTMLButtonElement);
-    controls[(current + direction + controls.length) % controls.length]?.focus();
-  }
-
-  private selectSection(section: WorkbenchSection): void {
-    this.activeSection = section;
-    this.workspace.save(section);
-    this.shadowRoot?.querySelectorAll<HTMLElement>("[data-section]").forEach((button) => {
-      if (button.dataset.section === section) button.setAttribute("aria-current", "page");
-      else button.removeAttribute("aria-current");
-    });
-    const inspector = this.shadowRoot?.querySelector<HTMLElement>(".frameulator-inspector");
-    if (inspector && matchMedia("(max-width: 820px)").matches) inspector.dataset.open = "true";
-    this.selectInspectorTab("inspect");
-    this.renderSection();
-  }
-
-  private selectInspectorTab(tab: string): void {
-    this.shadowRoot?.querySelectorAll<HTMLElement>("[data-tab]").forEach((button) => {
-      button.setAttribute("aria-selected", String(button.dataset.tab === tab));
-    });
-    this.shadowRoot?.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab;
-    });
-  }
-
-  private renderSection(): void {
-    const title = this.shadowRoot?.querySelector<HTMLElement>("[data-inspector-title]");
-    const state = this.shadowRoot?.querySelector<HTMLElement>("[data-inspector-state]");
-    const content = this.shadowRoot?.querySelector<HTMLElement>("[data-section-content]");
-    if (!title || !state || !content) return;
-    title.textContent = this.activeSection[0].toUpperCase() + this.activeSection.slice(1);
-    const release = this.verification?.release;
-    const rows = (items: Array<[string, string]>) => `<dl>${items.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>`;
-    const button = (label: string, action: string, kind = "") => `<button type="button" class="${kind}" data-workbench-action="${action}">${label}</button>`;
-
-    if (this.activeSection === "package") {
-      state.textContent = this.applicationState;
-      content.innerHTML = `${rows([
-        ["File", this.verification?.fileName ?? "No Flatpak selected"],
-        ["Size", this.verification ? `${(this.verification.size / 1048576).toFixed(2)} MB` : "—"],
-        ["Version", release?.version ?? "—"],
-        ["Architecture", release?.architecture ?? "—"],
-        ["Source", release?.sourceCommit ?? "—"],
-        ["Signature", release ? (this.getAttribute("trusted-key-id") ?? "Verified Ed25519 registry") : "—"],
-        ["Capsule", release?.browserWasmSha256 ?? "—"],
-        ["Project", this.management.projectState],
-        ["Capsule ABI", release ? String(release.capsuleAbi) : "—"],
-      ])}<p class="hash-line">${escapeHtml(this.verification?.flatpakSha256 ?? "Select an approved Agora release to unlock the workbench.")}</p><div class="action-grid">${button("Open Flatpak", "select", "primary")} ${button("Remove", "remove")}</div>`;
-    } else if (this.activeSection === "device") {
-      state.textContent = this.management.deviceState;
-      content.innerHTML = `${rows([
-        ["Target", "Steam Frame"], ["Architecture", "ARM64 contract"], ["Memory", `${SteamFrameProfile.hardware.memoryMiB} MiB contract`], ["GPU", "Adreno contract"],
-        ["OpenXR", "1.1 simulated"], ["Tracking", this.management.applicationSessionState === "CRASHED" ? "Unavailable" : "Available"],
-      ])}<p class="boundary-note">Hardware, firmware, GPU drivers, and SteamVR are simulated in this browser.</p>`;
-    } else if (this.activeSection === "deploy") {
-      state.textContent = this.management.deploymentState;
-      content.innerHTML = `${rows([
-        ["Current", this.management.currentRelease ? `Generation ${this.management.currentRelease}` : "None"],
-        ["Previous", this.management.previousRelease ? `Generation ${this.management.previousRelease}` : "None"],
-        ["Policy", this.management.deviceState === "AVAILABLE" ? "Ready" : "Blocked"],
-        ["Mode", "Deployment rehearsal"],
-      ])}<ol class="event-timeline">${this.management.events.slice(-6).map((event) => `<li><span>${event.sequence}</span>${escapeHtml(event.kind)}</li>`).join("") || "<li>No deployment events</li>"}</ol><div class="action-stack">${button("Rehearse deploy", "deploy", "primary")} ${button("Simulate update", "update")} ${button("Fail update + recover", "failed-update")} ${button("Rollback", "rollback")}</div>`;
-    } else if (this.activeSection === "session") {
-      state.textContent = this.management.applicationSessionState;
-      content.innerHTML = `${rows([
-        ["Application", this.management.applicationSessionState], ["OpenXR", this.readHud("[data-hud-session]")],
-        ["Frames", this.readHud("[data-hud-frames]")], ["Last event", this.management.lastEvent],
-      ])}<div class="action-stack">${button("Launch capsule", "launch", "primary")} ${button("Stop", "stop")} ${button("Restart capsule", "restart")} ${button("Simulate crash", "crash", "danger")} ${button("Recover", "recover")} ${button("Lose tracking", "loss")} ${button("Restore tracking", "restore")}</div>`;
-    } else if (this.activeSection === "tests") {
-      state.textContent = this.management.testState;
-      content.innerHTML = `<div class="scenario-list"><button type="button" data-workbench-action="normal"><span>01</span><strong>Managed normal session</strong><small>Verify, deploy, launch, focus, render</small></button><button type="button" data-workbench-action="tracking"><span>02</span><strong>Tracking recovery</strong><small>Lose tracking and return to focused</small></button><button type="button" data-workbench-action="controller"><span>03</span><strong>Controller action</strong><small>Drive the visible right controller from the input bridge</small></button><article><span>04–12</span><strong>Policy and evidence suite</strong><small>Invalid package, crash, update, rollback, persistence, cleanup, and native comparison run through API and CI checks.</small></article></div>`;
-    } else {
-      state.textContent = this.lastReport?.passed ? "PASSED" : "NOT RUN";
-      content.innerHTML = `${rows([
-        ["Browser", this.lastReport ? (this.lastReport.passed ? "Passed" : "Failed") : "Not run"],
-        ["Level", "F1/F2"], ["Native install", "Not executed here"], ["Physical device", "Not tested"],
-      ])}<div class="action-stack">${button("Import native evidence", "import")} ${button("Export frameproof", "export", "primary")}</div>`;
-    }
+  private async perform(action: string): Promise<void> {
+    if (!this.lab || this.busy) return;
+    const lab = this.lab;
+    const generation = this.generation;
+    this.busy = true;
     this.syncControls();
-  }
-
-  private renderServices(): void {
-    const container = this.shadowRoot?.querySelector(".frameulator-services");
-    if (!this.services || !container) return;
-    container.innerHTML = serviceOrder.map((name) => `<article><div><strong>${name}</strong><span>${this.services![name].status}</span></div><p>${this.services![name].detail}</p></article>`).join("");
-  }
-
-  private selectFlatpak(file: File): void {
-    this.appendLog(`Selected ${file.name} · ${Math.ceil(file.size / 1024)} KB`);
-    this.lab?.selectFlatpak(file).then((verification) => {
-      this.verification = verification;
-      this.appendLog(`Verified ${verification.release?.version} · capsule ABI ${verification.release?.capsuleAbi}`);
-      this.renderSection();
-    }).catch((error) => this.showError(error));
-  }
-
-  private setApplicationState(state: ApplicationState, detail: string, progress?: number): void {
-    this.applicationState = state;
-    const upload = this.shadowRoot?.querySelector<HTMLElement>(".frameulator-upload");
-    const detailElement = this.shadowRoot?.querySelector<HTMLElement>("[data-upload-detail]");
-    const progressElement = this.shadowRoot?.querySelector<HTMLProgressElement>("progress");
-    if (upload) {
-      upload.dataset.uploadState = state;
-      upload.hidden = ["READY", "RUNNING", "STOPPED"].includes(state);
+    try {
+      switch (action) {
+        case "sample": await lab.loadApplication({ adapterId: "neutral-panel", manifest: { id: "sample-panel", name: "Sample panel", version: "1.0.0" }, config: {} }); break;
+        case "start": await lab.start(); break;
+        case "stop": await lab.stop(); break;
+        case "reset": await lab.reset(); break;
+        case "remove": await lab.removeApplication(); break;
+        case "advance": await lab.action("sample.advance"); break;
+        case "export": await this.downloadReport(); break;
+        default: return;
+      }
+      if (generation !== this.generation) return;
+      await this.refresh();
+      this.setText("[data-status]", action === "export" ? "Report exported · simulation evidence only" : `${this.applicationState} · ${this.currentSnapshot?.application?.descriptor.name ?? "no application loaded"}`);
+      this.appendLog(`Completed: ${action}`);
+    } catch (error) {
+      if (generation === this.generation) this.showError(error);
+    } finally {
+      if (generation === this.generation) { this.busy = false; this.syncControls(); }
     }
-    if (detailElement) detailElement.textContent = detail;
-    if (progressElement) {
-      progressElement.hidden = state !== "HASHING";
-      progressElement.value = progress ?? 0;
+  }
+
+  private async refresh(): Promise<void> {
+    if (!this.lab) return;
+    const lab = this.lab;
+    const generation = this.generation;
+    const snapshot = await lab.snapshot() as WorkbenchSnapshot;
+    if (lab === this.lab && generation === this.generation) this.renderSnapshot(snapshot, true);
+  }
+
+  private renderSnapshot(snapshot: WorkbenchSnapshot, force = false): void {
+    if (!snapshot || !this.lab) return;
+    this.currentSnapshot = snapshot;
+    const application = snapshot.application;
+    this.applicationState = application?.state ?? "EMPTY";
+    if (this.applicationState !== "RUNNING") {
+      for (const preview of this.previews.values()) {
+        const pointerId = preview.pointerId;
+        preview.pointerId = undefined;
+        preview.lastInput = undefined;
+        if (pointerId !== undefined && preview.canvas.hasPointerCapture(pointerId)) preview.canvas.releasePointerCapture(pointerId);
+      }
     }
-    this.setText("[data-status]", detail);
-    this.appendLog(`${state} · ${detail}`);
-    this.renderSection();
+    this.setText("[data-session-state]", snapshot.sessionState ?? "IDLE");
+    this.setText("[data-frame-count]", `${snapshot.frameCount ?? 0} FRAMES`);
+    this.renderSurfaces(application?.surfaces ?? []);
+    const empty = this.shadowRoot?.querySelector<HTMLElement>("[data-empty]");
+    if (empty) empty.hidden = Boolean(application);
+    this.syncControls();
+    const now = performance.now();
+    if (!force && now - this.lastInspection < 120) return;
+    this.lastInspection = now;
+    this.setText("[data-application-name]", application?.descriptor.name ?? "No application");
+    this.setText("[data-application-state]", this.applicationState);
+    this.setText("[data-app-id]", application?.descriptor.id ?? "—");
+    this.setText("[data-app-version]", application?.descriptor.version ?? "—");
+    this.setText("[data-app-lifecycle]", this.applicationState);
+    this.setText("[data-app-surfaces]", String(application?.surfaces.length ?? 0));
+    this.setText("[data-app-data]", application ? JSON.stringify(application.data, null, 2) ?? "null" : "No application loaded");
   }
 
-  private setManagement(snapshot: ManagementSnapshot): void {
-    this.management = structuredClone(snapshot);
-    this.setText("[data-top-device]", snapshot.deviceState);
-    this.setText("[data-top-package]", this.verification?.release ? `Agora ${this.verification.release.version}` : "Verified Agora");
-    this.setText("[data-last-event]", snapshot.lastEvent);
-    this.appendLog(`${snapshot.lastEvent} · ${snapshot.deploymentState} · ${snapshot.applicationSessionState}`);
-    this.renderSection();
+  private renderSurfaces(surfaces: RenderSurface[]): void {
+    const list = this.shadowRoot?.querySelector<HTMLElement>("[data-surfaces]");
+    if (!list) return;
+    const ids = new Set(surfaces.map((surface) => surface.id));
+    for (const [id, preview] of this.previews) {
+      if (!ids.has(id)) { preview.element.remove(); this.previews.delete(id); }
+    }
+    for (const surface of surfaces) {
+      let preview = this.previews.get(surface.id);
+      if (!preview) {
+        const element = this.ownerDocument.createElement("figure");
+        element.className = "surface-card";
+        const label = this.ownerDocument.createElement("figcaption");
+        const canvas = this.ownerDocument.createElement("canvas");
+        canvas.setAttribute("aria-label", `RGBA surface ${surface.id}. Click to send pointer input.`);
+        element.append(canvas, label);
+        list.append(element);
+        preview = { element, canvas, label, surface, revision: -1 };
+        this.previews.set(surface.id, preview);
+        const boundPreview = preview;
+        for (const type of ["pointerdown", "pointermove", "pointerup", "pointercancel", "lostpointercapture"]) {
+          canvas.addEventListener(type, (event) => this.handleSurfacePointer(event as PointerEvent, boundPreview), { signal: this.bindings!.signal });
+        }
+      }
+      const resized = preview.canvas.width !== surface.width || preview.canvas.height !== surface.height;
+      preview.surface = surface;
+      preview.label.textContent = `${surface.id} · ${surface.width} × ${surface.height} · rev ${surface.revision}${surface.visible === false ? " · hidden in scene" : ""}`;
+      if (resized || preview.revision !== surface.revision) {
+        if (resized) { preview.canvas.width = surface.width; preview.canvas.height = surface.height; }
+        const context = preview.canvas.getContext("2d");
+        if (context) {
+          const pixels = context.createImageData(surface.width, surface.height);
+          pixels.data.set(surface.rgba);
+          context.putImageData(pixels, 0, 0);
+        }
+        preview.revision = surface.revision;
+      }
+    }
+    this.setText("[data-surface-count]", String(surfaces.length));
+    const placeholder = this.shadowRoot?.querySelector<HTMLElement>("[data-surface-placeholder]");
+    if (placeholder) placeholder.hidden = surfaces.length > 0;
+    if (surfaces.length === 0) this.setText("[data-pixel-readout]", "Point at a surface to inspect pixels. Click to send normalized input.");
   }
 
-  private updateFrameHud(snapshot?: { sessionState?: string; frameCount?: number }): void {
-    if (!snapshot) return;
-    this.setText("[data-hud-session]", `SESSION · ${snapshot.sessionState ?? "IDLE"}`);
-    this.setText("[data-hud-frames]", `${snapshot.frameCount ?? 0} FRAMES`);
-    if (this.activeSection === "session") this.renderSection();
+  private handleSurfacePointer(event: PointerEvent, preview: SurfacePreview): void {
+    if (preview.pointerId !== undefined && event.pointerId !== preview.pointerId) return;
+    if (event.type === "lostpointercapture" && preview.pointerId === undefined) return;
+    const bounds = preview.canvas.getBoundingClientRect();
+    const rawX = (event.clientX - bounds.left) / bounds.width;
+    const rawY = (event.clientY - bounds.top) / bounds.height;
+    const outside = rawX < 0 || rawX > 1 || rawY < 0 || rawY > 1;
+    const x = Math.max(0, Math.min(1, rawX));
+    const y = Math.max(0, Math.min(1, rawY));
+    const px = Math.min(preview.surface.width - 1, Math.floor(x * preview.surface.width));
+    const py = Math.min(preview.surface.height - 1, Math.floor(y * preview.surface.height));
+    const offset = (py * preview.surface.width + px) * 4;
+    const rgba = Array.from(preview.surface.rgba.subarray(offset, offset + 4));
+    this.setText("[data-pixel-readout]", `${preview.surface.id} · (${px}, ${py}) · RGBA ${rgba.join(", ")} · normalized ${x.toFixed(3)}, ${y.toFixed(3)}`);
+    const phase = event.type === "pointerdown" ? "down" : event.type === "pointerup" ? (outside ? "cancel" : "up") : event.type === "pointermove" ? "move" : "cancel";
+    if (!this.lab || this.busy || this.applicationState !== "RUNNING") {
+      if (phase === "up" || phase === "cancel") {
+        preview.pointerId = undefined;
+        preview.lastInput = undefined;
+        if (preview.canvas.hasPointerCapture(event.pointerId)) preview.canvas.releasePointerCapture(event.pointerId);
+      }
+      return;
+    }
+    const button = phase === "move" ? (preview.pointerId !== undefined ? preview.lastInput?.button ?? 0 : 0) : event.button;
+    const input: SurfacePointerInput = phase === "cancel" && preview.lastInput ? { ...preview.lastInput, phase } : { type: "pointer", surfaceId: preview.surface.id, phase, x, y, button };
+    if (phase === "down") {
+      event.preventDefault();
+      preview.pointerId = event.pointerId;
+      preview.canvas.setPointerCapture(event.pointerId);
+    }
+    preview.lastInput = input;
+    if (phase === "up" || phase === "cancel") {
+      preview.pointerId = undefined;
+      if (preview.canvas.hasPointerCapture(event.pointerId)) preview.canvas.releasePointerCapture(event.pointerId);
+    }
+    void this.lab.input(input).then(() => this.refresh()).catch((error) => this.showError(error));
   }
 
   private syncControls(): void {
-    const verified = ["READY", "RUNNING", "STOPPED"].includes(this.applicationState);
-    const deployed = this.management.deploymentState === "DEPLOYED";
-    const running = this.management.applicationSessionState === "RUNNING";
-    this.setDisabled("run", !verified);
-    this.setDisabled("stop", !running);
-    this.setWorkbenchDisabled("deploy", !verified || this.management.deploymentState !== "ABSENT");
-    this.setWorkbenchDisabled("launch", !deployed || this.management.applicationSessionState !== "IDLE");
-    this.setWorkbenchDisabled("stop", !running);
-    this.setWorkbenchDisabled("restart", !verified || !deployed || !["IDLE", "RUNNING", "CRASHED"].includes(this.management.applicationSessionState));
-    this.setWorkbenchDisabled("crash", !running);
-    this.setWorkbenchDisabled("recover", this.management.applicationSessionState !== "CRASHED");
-    this.setWorkbenchDisabled("update", !verified || !deployed || this.management.applicationSessionState !== "IDLE");
-    this.setWorkbenchDisabled("failed-update", !verified || !deployed || this.management.applicationSessionState !== "IDLE");
-    this.setWorkbenchDisabled("rollback", !verified || !deployed || this.management.previousRelease === 0);
-    this.setWorkbenchDisabled("remove", !verified);
-    this.setWorkbenchDisabled("normal", !verified);
-    this.setWorkbenchDisabled("tracking", !verified);
-    this.setWorkbenchDisabled("controller", !verified);
-    this.setWorkbenchDisabled("loss", !running);
-    this.setWorkbenchDisabled("restore", !running);
-    this.setWorkbenchDisabled("export", !this.lastReport);
-    this.setText("[data-section-state=package]", verified ? "ready" : "waiting");
-    this.setText("[data-section-state=device]", this.management.deviceState.toLowerCase());
-    this.setText("[data-section-state=deploy]", this.management.deploymentState.toLowerCase());
-    this.setText("[data-section-state=session]", this.management.applicationSessionState.toLowerCase());
-    this.setText("[data-section-state=tests]", this.management.testState.toLowerCase());
-    this.setText("[data-section-state=evidence]", this.lastReport?.passed ? "passed" : "waiting");
+    const loaded = Boolean(this.currentSnapshot?.application);
+    const running = this.applicationState === "RUNNING";
+    const disabled: Record<string, boolean> = {
+      sample: loaded, start: !loaded || running || this.applicationState === "FAILED", stop: !running,
+      reset: !loaded, remove: !loaded, advance: !running || this.currentSnapshot?.application?.adapterId !== "neutral-panel", export: !loaded,
+    };
+    this.shadowRoot?.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
+      button.disabled = !this.lab || this.busy || Boolean(disabled[button.dataset.action!]);
+    });
+    const advance = this.shadowRoot?.querySelector<HTMLElement>('[data-action="advance"]');
+    if (advance) advance.hidden = loaded && this.currentSnapshot?.application?.adapterId !== "neutral-panel";
     const light = this.shadowRoot?.querySelector<HTMLElement>("[data-status-light]");
-    if (light) light.dataset.state = running ? "running" : verified ? "ready" : "waiting";
+    if (light) light.dataset.state = running ? "running" : loaded ? "ready" : "empty";
+    this.shadowRoot?.querySelector(".frameulator-shell")?.setAttribute("aria-busy", String(!this.lab || this.busy));
   }
 
-  private async runScenario(scenario: string): Promise<void> {
-    if (!this.lab) return;
-    this.appendLog(`Running ${scenario}`);
-    await this.lab.runScenario(scenario);
-  }
-
-  private async pulseController(): Promise<void> {
-    if (!this.lab) return;
-    await this.lab.setControllerState("right", { trigger: 1, buttons: { primary: true } });
-    this.appendLog("Controller · right primary pressed");
-    await new Promise((resolve) => setTimeout(resolve, 180));
-    await this.lab.setControllerState("right", { trigger: 0, buttons: { primary: false } });
-  }
-
-  private async importEvidence(file: File): Promise<void> {
-    const evidence = await this.lab?.importEvidence(file);
-    if (!evidence) return;
-    const proof = this.shadowRoot?.querySelector<HTMLElement>("[data-proof-native]");
-    if (proof) proof.innerHTML = `<span>Native evidence</span><strong>${evidence.passed ? "Passed" : "Failed"}</strong><small>${escapeHtml(evidence.evidenceLevel)} · ${escapeHtml(evidence.producer)}</small>`;
-    this.appendLog(`Imported ${evidence.evidenceLevel} evidence · ${evidence.scenario}`);
-    this.selectInspectorTab("proof");
-  }
-
-  private showReport(report: ScenarioReport): void {
-    this.lastReport = report;
-    this.management = structuredClone(report.management.snapshot);
-    this.setText("[data-status]", report.passed ? `${report.scenario} passed · ${report.frameCount} frames` : `${report.scenario} failed`);
-    const proof = this.shadowRoot?.querySelector<HTMLElement>("[data-proof-browser]");
-    if (proof) proof.innerHTML = `<span>Browser contract</span><strong>${report.passed ? "Passed" : "Failed"}</strong><small>F1/F2 · ${report.frameCount} frames · native execution false</small>`;
-    this.appendLog(`${report.passed ? "PASS" : "FAIL"} · ${report.scenario} · ${report.frameCount} frames`);
-    this.renderSection();
-  }
-
-  private async removeApplication(): Promise<void> {
-    await this.lab?.removeApplication();
-    this.verification = undefined;
-    this.lastReport = undefined;
-    this.management = structuredClone(emptyManagement);
-    this.workspace.clear();
-    this.setText("[data-top-package]", "None");
-    this.setText("[data-top-device]", "Offline");
-    this.appendLog("Application removed from the local workbench");
-    this.renderSection();
-  }
-
-  private restoreReportSummary(report: ScenarioReport): void {
-    this.lastReport = report;
-    const proof = this.shadowRoot?.querySelector<HTMLElement>("[data-proof-browser]");
-    if (proof) proof.innerHTML = `<span>Previous browser contract</span><strong>${report.passed ? "Passed" : "Failed"}</strong><small>Reselect the exact Flatpak before capsule access is restored.</small>`;
-    this.setText("[data-status]", "Previous report restored · Flatpak must be selected again");
-    this.appendLog(`Restored report metadata · ${report.scenario}`);
-  }
-
-  private restoreNativeSummary(evidence: { evidenceLevel: string; producer: string; passed: boolean }): void {
-    const proof = this.shadowRoot?.querySelector<HTMLElement>("[data-proof-native]");
-    if (proof) proof.innerHTML = `<span>Stored native evidence</span><strong>${evidence.passed ? "Passed" : "Failed"}</strong><small>${escapeHtml(evidence.evidenceLevel)} · ${escapeHtml(evidence.producer)}</small>`;
-  }
-
-  private showError(error: unknown): void {
-    const message = error instanceof Error ? error.message : String(error);
-    this.setText("[data-status]", `Blocked · ${message}`);
-    this.appendLog(`ERROR · ${message}`);
-    this.dispatch("frameulator-error", { message });
+  private selectTab(tab: InspectorTab): void {
+    this.activeTab = tab;
+    this.shadowRoot?.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((button) => {
+      button.setAttribute("aria-selected", String(button.dataset.tab === tab));
+      button.tabIndex = button.dataset.tab === tab ? 0 : -1;
+    });
+    this.shadowRoot?.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== tab; });
   }
 
   private async downloadReport(): Promise<void> {
     if (!this.lab) return;
     const report = await this.lab.exportReport();
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
-    const anchor = document.createElement("a");
+    const json = JSON.stringify(report, null, 2);
+    this.setText("[data-report]", json);
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const anchor = this.ownerDocument.createElement("a");
     anchor.href = url;
-    anchor.download = `frameulator-${report.scenario}.frameproof.json`;
+    anchor.download = "frameulator-simulation-report.json";
     anchor.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.selectTab("evidence");
+  }
+
+  private showError(error: unknown, forward = true): void {
+    const message = error instanceof Error ? error.message : String(error);
+    this.setText("[data-status]", `Error · ${message}`);
+    this.appendLog(`ERROR · ${message}`);
+    if (forward) this.dispatch("frameulator-error", { message });
   }
 
   private appendLog(message: string): void {
     this.logEntries.push(`${new Date().toLocaleTimeString([], { hour12: false })}  ${message}`);
-    if (this.logEntries.length > 80) this.logEntries.shift();
-    const logs = this.shadowRoot?.querySelector<HTMLElement>(".frameulator-logs");
-    if (logs) {
-      logs.textContent = this.logEntries.join("\n");
-      logs.scrollTop = logs.scrollHeight;
-    }
-  }
-
-  private setDisabled(action: string, disabled: boolean): void {
-    this.shadowRoot?.querySelectorAll<HTMLButtonElement>(`[data-action="${action}"]`).forEach((button) => { button.disabled = disabled; });
-  }
-
-  private setWorkbenchDisabled(action: string, disabled: boolean): void {
-    this.shadowRoot?.querySelectorAll<HTMLButtonElement>(`[data-workbench-action="${action}"]`).forEach((button) => { button.disabled = disabled; });
+    this.logEntries = this.logEntries.slice(-80);
+    this.setText(".frameulator-logs", this.logEntries.join("\n"));
   }
 
   private setText(selector: string, value: string): void {
     const element = this.shadowRoot?.querySelector<HTMLElement>(selector);
-    if (element) element.textContent = value;
-  }
-
-  private readHud(selector: string): string {
-    return this.shadowRoot?.querySelector<HTMLElement>(selector)?.textContent ?? "—";
+    if (element && element.textContent !== value) element.textContent = value;
   }
 
   private dispatch(type: string, detail: unknown): void {

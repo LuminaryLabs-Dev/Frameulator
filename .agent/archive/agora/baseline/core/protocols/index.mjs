@@ -1,0 +1,4 @@
+export const RUNTIME_PROTOCOL="frameulator.runtime/1",DRIVER_PROTOCOL="frameulator.driver/1",GUEST_PROTOCOL="frameulator.guest/1";
+export const RuntimeOperations=Object.freeze(["runtime.status","runtime.start","runtime.stop","runtime.restart","device.get","device.configure","package.install","package.remove","package.launch","package.stop","tracking.set","input.send","display.subscribe","audio.subscribe","logs.subscribe","telemetry.subscribe"]);
+export const DriverOperations=Object.freeze(["probe","install","uninstall","start","stop","publishDevice","removeDevice","status","capabilities"]);
+export function createEnvelope(protocol,operation,payload={},correlationId=crypto.randomUUID()){if(!protocol||!operation)throw new TypeError("protocol and operation are required");return{protocol,operation,correlationId,payload};}
