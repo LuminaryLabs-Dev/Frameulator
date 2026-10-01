@@ -8,6 +8,8 @@ export default defineConfig({
   build: {
     outDir: resolve(import.meta.dirname, "../../docs"),
     emptyOutDir: true,
+    // CSP allows same-origin kernel fetches, never data: URLs.
+    assetsInlineLimit: 0,
     target: "es2022",
   },
   plugins: [{

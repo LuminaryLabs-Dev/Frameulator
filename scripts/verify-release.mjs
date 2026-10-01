@@ -56,6 +56,13 @@ assert.ok(pack.files.every((file) => !/\.(?:pem|key|env)$/.test(file.path)));
 
 const site = await readFile(resolve(root, "docs/index.html"), "utf8");
 assert.match(site, /Frameulator/);
+const siteAssets = await readdir(resolve(root, "docs/assets"));
+assert.ok(siteAssets.some((name) => name.endsWith(".wasm")), "site must emit a same-origin kernel asset");
+for (const name of siteAssets.filter((name) => name.endsWith(".js"))) {
+  const source = await readFile(resolve(root, "docs/assets", name), "utf8");
+  assert.doesNotMatch(source, /data:application\/wasm/i, "CSP disallows fetching an inlined data: kernel");
+}
+
 assert.doesNotMatch(site, /localhost/);
 assert.doesNotMatch(site, /qemu|alpine-frameulator|SharedArrayBuffer/i);
 assert.doesNotMatch(site, /class="(?:hero|contracts|site-header)"|<footer/i);
