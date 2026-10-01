@@ -1,0 +1,1 @@
+export function createAdbEndpoint({host="127.0.0.1",port=5555}={}){return{schema:"frameulator.adb/1",transport:"tcp",host,port,status:"stopped",nativeUsb:false,evidence:"portable-transport-contract"};}

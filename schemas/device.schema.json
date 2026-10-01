@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"frameulator.device/1","type":"object","required":["schema","id","architecture"],"properties":{"schema":{"const":"frameulator.device/1"},"id":{"type":"string"},"architecture":{"type":"string"}},"additionalProperties":true}

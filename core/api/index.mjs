@@ -1,0 +1,2 @@
+import{validateDevice}from"../device-model/index.mjs";
+export function createFrameulatorApi({device,xr,android,steamos}){const v=validateDevice(device);if(!v.ok)throw new Error(v.errors.join(", "));return Object.freeze({device:{getInfo:()=>structuredClone(device),reboot:async()=>({accepted:true,simulated:true})},runtime:{status:()=>({androidConnected:android.connected,steamOs:steamos.lifecycle})},tracking:{getState:()=>structuredClone(xr)}});}

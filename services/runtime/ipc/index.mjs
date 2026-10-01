@@ -1,0 +1,1 @@
+import{RUNTIME_PROTOCOL,RuntimeOperations}from"../../../core/protocols/index.mjs";export function validateRuntimeMessage(m){if(m?.protocol!==RUNTIME_PROTOCOL)throw new Error("Unsupported runtime protocol");if(!RuntimeOperations.includes(m.operation))throw new Error("Unsupported runtime operation: "+m.operation);return m;}

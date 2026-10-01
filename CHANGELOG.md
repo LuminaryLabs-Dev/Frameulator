@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Establish the cross-platform Frameulator monorepo boundary: host-neutral core, runtime service, privileged driver service, platform adapters, Android/SteamOS runtime boundaries, desktop client, SDK, and architecture tests.
+- Add portable-mode runtime contracts so Frameulator can operate without a privileged native driver.
+- Add fail-closed Windows, Linux, and macOS driver adapters. Native device publication remains explicitly unproven.
+- Preserve the 0.2.0 browser laboratory as the lightweight simulation/evidence tier.
+
 ## 0.2.0 - 2026-09-04
 
 - Require an approved local Agora Flatpak before application sessions can run.

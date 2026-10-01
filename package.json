@@ -3,10 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "workspaces": ["packages/*","apps/*"],
   "scripts": {
     "clean": "node scripts/clean.mjs",
     "build:wasm": "node scripts/build-wasm.mjs",
@@ -14,8 +11,11 @@
     "build:site": "vite build --config apps/web/vite.config.ts",
     "build": "npm run clean && npm run build:wasm && npm run build:package && npm run build:site",
     "check": "tsc -p packages/frameulator/tsconfig.build.json --noEmit",
-    "test": "node --test packages/frameulator/tests/*.test.mjs",
-    "verify": "npm run build && npm run check && npm test && node scripts/verify-release.mjs",
+    "test:browser": "node --test packages/frameulator/tests/*.test.mjs",
+    "test:monorepo": "node --test tests/core/*.test.mjs tests/services/*.test.mjs tests/integration/*.test.mjs tests/acceptance/*.test.mjs",
+    "test": "npm run test:browser && npm run test:monorepo",
+    "verify:monorepo": "node scripts/verify-monorepo.mjs",
+    "verify": "npm run build && npm run check && npm test && npm run verify:monorepo && node scripts/verify-release.mjs",
     "preview": "vite preview --config apps/web/vite.config.ts",
     "pack:check": "npm pack --dry-run --workspace @luminarylabs/frameulator"
   },
@@ -26,8 +26,6 @@
     "typescript": "5.9.2",
     "vite": "7.1.3"
   },
-  "engines": {
-    "node": ">=22.0.0"
-  },
+  "engines": {"node": ">=22.0.0"},
   "packageManager": "npm@11.9.0"
 }

@@ -1,0 +1,1 @@
+import{DRIVER_PROTOCOL}from"../protocol/index.mjs";export function validateDriverMessage(m){if(m?.protocol!==DRIVER_PROTOCOL)throw new Error("Unsupported driver protocol");if(typeof m.operation!=="string")throw new Error("Missing driver operation");return m;}

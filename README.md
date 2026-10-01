@@ -1,5 +1,27 @@
 # Frameulator
 
+Frameulator is a **cross-platform virtual Steam Frame development device**. Its long-term role is to let development tools, applications, Android/SteamOS runtimes, and automated QA target a software-defined Frame without requiring physical hardware.
+
+The repository is now structured as a monorepo with strict boundaries:
+
+```text
+core/                    host-neutral virtual-device model and protocols
+services/runtime/        unprivileged long-running frameulatord
+services/driver-service/ privileged native-driver boundary
+drivers/                 Windows, Linux, and macOS adapters
+runtimes/                Android and SteamOS execution boundaries
+app/desktop/             developer control client
+sdk/                     automation API
+```
+
+**Current evidence boundary:** the native driver adapters intentionally fail closed. Portable-mode contracts and the existing browser simulation are implemented, but native USB/device enumeration, native Android/SteamOS execution, and physical-hardware equivalence are not yet proven.
+
+The existing 0.2.0 browser laboratory remains the lightweight F1/F2 simulation tier and is retained below.
+
+---
+
+## Browser laboratory — 0.2.0
+
 Frameulator is a lightweight browser laboratory for approved Agora Flatpak releases. It hashes a user-selected Flatpak locally, matches it against an Ed25519-signed release registry, verifies the paired Agora browser capsule, runs that capsule in a Web Worker, and renders an inspectable stereo environment with Three.js.
 
 The website is a fixed, single-screen operator workbench rather than a landing page. It exercises Agora's shared **MDM Lite** contract: one approved release, one simulated Steam Frame, one Nexus project, and one application session. Package, device, deployment, session, test, log, and proof state stay visible without document scrolling.
